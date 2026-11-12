@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Synta — Mapa y lotes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F1}
+a{color:#1D6A47}a:hover{color:#14492F}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: Inter, system-ui, sans-serif; color: #15211B; background: #F5F6F1">
+  <nav aria-label="Principal" style="flex: 0 0 240px; width: 240px; background: #13261C; color: #E8EFE9; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 24px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke="#7BC59A" stroke-width="2"></path><path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke="#7BC59A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Synta</span>
+    </div>
+    <a href="Dashboard.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Panel</a>
+    <a href="Mapa.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #21402F; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">Mapa y lotes</a>
+    <a href="Trazabilidad.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Trazabilidad</a>
+    <a href="Reporte.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Pasaporte</a>
+    <a href="Accion.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Registrar acción</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-wrap: wrap; align-items: stretch">
+    <aside aria-label="Lotes" style="flex: 1 1 300px; max-width: 100%; background: #FFFFFF; border-right: 1px solid #DDE2DA; padding: 24px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 600">Mapa y lotes</h1>
+        <span style="font-size: 13px; color: #55615A">La Esperanza · 312 ha mapeadas</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{lotes}}" as="l" hint-placeholder-count="4">
+          <button type="button" onClick="{{l.pick}}" style="{{l.cardStyle}}">
+            <span style="display: flex; justify-content: space-between; gap: 8px; width: 100%">
+              <span style="font-weight: 600; font-size: 14px">{{l.name}}</span>
+              <span style="font-size: 13px; color: #55615A">{{l.ha}} ha</span>
+            </span>
+            <span style="font-size: 12px; color: #55615A">{{l.crop}} · {{l.status}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; background: #F5F6F1">
+        <span style="font-size: 13px; font-weight: 600">Nuevo lote en edición</span>
+        <label for="nombre" style="font-size: 12px; color: #55615A">Nombre</label>
+        <input id="nombre" type="text" value="Lote 5 — Potrero Este" style="height: 40px; border: 1px solid #C9D0C6; border-radius: 8px; padding: 0 10px; font-size: 14px; font-family: inherit">
+        <span style="font-size: 12px; color: #55615A">3 vértices · cerrá el polígono para calcular superficie</span>
+      </div>
+    </aside>
+
+    <section aria-label="Mapa satelital" style="flex: 999 1 520px; min-width: 0; position: relative; min-height: 760px; background: #2F4A2A; overflow: hidden">
+      <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Imagen satelital del establecimiento con 4 lotes y un lote en dibujo" style="position: absolute; inset: 0; width: 100%; height: 100%">
+        <defs>
+          <pattern id="tex" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(12)"><rect width="12" height="12" fill="none"></rect><line x1="0" y1="0" x2="0" y2="12" stroke="#000" stroke-opacity="0.06" stroke-width="4"></line></pattern>
+        </defs>
+        <rect width="1000" height="700" fill="#3B5532"></rect>
+        <polygon points="0,0 420,0 400,90 0,110" fill="#6D7B45"></polygon>
+        <polygon points="420,0 1000,0 1000,90 410,95" fill="#55703B"></polygon>
+        <polygon points="0,110 120,100 150,600 0,620" fill="#8C7A4E"></polygon>
+        <polygon points="650,120 1000,90 1000,270 660,310" fill="#7A6B44"></polygon>
+        <polygon points="0,620 1000,600 1000,700 0,700" fill="#4E6A39"></polygon>
+        <rect width="1000" height="700" fill="url(#tex)"></rect>
+        <path d="M0,640 C200,610 320,660 520,630 S860,580 1000,610" fill="none" stroke="#5E8BA8" stroke-width="10" stroke-linecap="round"></path>
+        <line x1="0" y1="330" x2="1000" y2="315" stroke="#C9B98E" stroke-width="4"></line>
+        <line x1="405" y1="0" x2="460" y2="700" stroke="#C9B98E" stroke-width="3"></line>
+        <polygon points="120,120 380,100 395,300 140,318" fill="#A3B061" stroke="#F4F7F2" stroke-width="2.5"></polygon>
+        <polygon points="425,110 640,128 632,300 415,302" fill="#7FA35A" stroke="#F4F7F2" stroke-width="2.5"></polygon>
+        <polygon points="150,350 420,335 448,560 172,588" fill="#8FA95C" stroke="#FFD166" stroke-width="4"></polygon>
+        <polygon points="472,345 720,325 758,540 482,568" fill="#B7A866" stroke="#F4F7F2" stroke-width="2.5"></polygon>
+        <polyline points="770,130 905,150 885,285" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="8 6"></polyline>
+        <circle cx="770" cy="130" r="7" fill="#FFFFFF" stroke="#1D6A47" stroke-width="3"></circle>
+        <circle cx="905" cy="150" r="7" fill="#FFFFFF" stroke="#1D6A47" stroke-width="3"></circle>
+        <circle cx="885" cy="285" r="7" fill="#FFFFFF" stroke="#1D6A47" stroke-width="3"></circle>
+        <g font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF" stroke="#13261C" stroke-width="3" paint-order="stroke">
+          <text x="200" y="215">Lote 1</text>
+          <text x="480" y="220">Lote 2</text>
+          <text x="245" y="470">Lote 3</text>
+          <text x="555" y="455">Lote 4</text>
+        </g>
+      </svg>
+      <sc-if value="{{showBosque}}" hint-placeholder-val="{{ true }}">
+        <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+          <defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="10" stroke="#FFD166" stroke-width="3"></line></pattern></defs>
+          <polygon points="700,330 990,300 995,600 775,590" fill="url(#hatch)" fill-opacity="0.55" stroke="#FFD166" stroke-width="2" stroke-dasharray="6 4"></polygon>
+          <text x="800" y="370" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" stroke="#13261C" stroke-width="3" paint-order="stroke">Bosque nativo · Cat. II</text>
+        </svg>
+      </sc-if>
+      <sc-if value="{{showNdvi}}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+          <polygon points="120,120 380,100 395,300 140,318" fill="#1A9850" fill-opacity="0.6"></polygon>
+          <polygon points="425,110 640,128 632,300 415,302" fill="#66BD63" fill-opacity="0.6"></polygon>
+          <polygon points="150,350 420,335 448,560 172,588" fill="#D9EF8B" fill-opacity="0.65"></polygon>
+          <polygon points="472,345 720,325 758,540 482,568" fill="#FDAE61" fill-opacity="0.6"></polygon>
+        </svg>
+      </sc-if>
+      <sc-if value="{{showFocos}}" hint-placeholder-val="{{ true }}">
+        <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+          <circle cx="880" cy="470" r="18" fill="#F97316" fill-opacity="0.3"></circle><circle cx="880" cy="470" r="7" fill="#F97316" stroke="#FFFFFF" stroke-width="2"></circle>
+          <circle cx="930" cy="545" r="18" fill="#F97316" fill-opacity="0.3"></circle><circle cx="930" cy="545" r="7" fill="#F97316" stroke="#FFFFFF" stroke-width="2"></circle>
+        </svg>
+      </sc-if>
+
+      <div role="toolbar" aria-label="Herramientas de dibujo" style="position: absolute; top: 16px; left: 16px; display: flex; gap: 6px; background: #FFFFFF; border-radius: 10px; padding: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2)">
+        <button type="button" aria-label="Dibujar polígono" aria-pressed="true" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: #E3F0E8; color: #14492F; cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 L4 7 L13 4 L20 12 L14 20 Z"></path><circle cx="4" cy="7" r="1.5" fill="currentColor"></circle><circle cx="13" cy="4" r="1.5" fill="currentColor"></circle></svg>
+        </button>
+        <button type="button" aria-label="Editar vértices" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: #15211B; cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20 L8 19 L19 8 L16 5 L5 16 Z"></path></svg>
+        </button>
+        <button type="button" aria-label="Borrar lote" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: #15211B; cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 7 H19 M10 7 V4 H14 V7 M7 7 L8 20 H16 L17 7"></path></svg>
+        </button>
+      </div>
+
+      <fieldset style="position: absolute; top: 16px; right: 16px; margin: 0; border: 0; background: #FFFFFF; border-radius: 10px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 6px; min-width: 210px">
+        <legend style="float: left; font-size: 12px; font-weight: 700; color: #55615A; padding: 0 0 4px; text-transform: uppercase; letter-spacing: 0.5px">Capas</legend>
+        <sc-for list="{{capas}}" as="c" hint-placeholder-count="3">
+          <button type="button" aria-pressed="{{c.on}}" onClick="{{c.toggle}}" style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit; font-size: 14px; color: #15211B; text-align: left">
+            <span style="{{c.boxStyle}}"></span>{{c.label}}
+          </button>
+        </sc-for>
+      </fieldset>
+
+      <div style="position: absolute; left: 16px; right: 16px; bottom: 16px; max-width: 420px; background: #FFFFFF; border-radius: 12px; padding: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+          <strong style="font-size: 16px">{{sel.name}}</strong>
+          <span style="font-size: 13px; color: #55615A">{{sel.ha}} ha · {{sel.crop}}</span>
+        </div>
+        <span style="font-size: 13px; line-height: 1.45; color: #55615A">{{sel.note}}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <a href="Procesando.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 8px; background: #1D6A47; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">Analizar y certificar lote</a>
+          <a href="Lote.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #C9D0C6; color: #15211B; font-weight: 600; font-size: 14px; text-decoration: none">Ver detalle</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sel: 2, ndvi: false, bosque: true, focos: true }; }
+  renderVals() {
+    const s = this.state;
+    const data = [
+      { name: 'Lote 1 — La Loma', crop: 'Maíz', ha: 96, status: 'Certificado', note: 'Último análisis hace 3 días. Sin cambios de cobertura desde 2020.' },
+      { name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, status: 'Certificado', note: 'Último análisis hace 2 días. Sin cambios de cobertura desde 2020.' },
+      { name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, status: 'Revisar', note: 'Limita con bosque nativo Cat. II al este. Recomendado: re-analizar tras la última imagen.' },
+      { name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, status: 'Sin analizar', note: 'Lote nuevo. Superpone 0,8 ha con zona de bosque protegido: revisar el polígono.' }
+    ];
+    const lotes = data.map((l, i) => ({
+      ...l,
+      pick: () => this.setState({ sel: i }),
+      cardStyle: 'display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; min-height: 56px; padding: 12px; border-radius: 10px; cursor: pointer; font-family: inherit; text-align: left; color: #15211B; background: ' + (i === s.sel ? '#E3F0E8' : '#FFFFFF') + '; border: ' + (i === s.sel ? '2px solid #1D6A47' : '1px solid #DDE2DA')
+    }));
+    const box = (on, color) => 'width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; border: 2px solid ' + color + '; background: ' + (on ? color : 'transparent');
+    const capas = [
+      { key: 'ndvi', label: 'NDVI (vigor vegetal)', color: '#1A9850' },
+      { key: 'bosque', label: 'Bosque nativo protegido', color: '#B8860B' },
+      { key: 'focos', label: 'Focos de calor (FIRMS)', color: '#EA580C' }
+    ].map((c) => ({ ...c, on: s[c.key] ? 'true' : 'false', boxStyle: box(s[c.key], c.color), toggle: () => this.setState({ [c.key]: !s[c.key] }) }));
+    return { lotes, capas, sel: data[s.sel], showNdvi: s.ndvi, showBosque: s.bosque, showFocos: s.focos };
+  }
+}
+</script>
+</body>
+</html>

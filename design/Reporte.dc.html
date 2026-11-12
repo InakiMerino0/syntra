@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Synta — Pasaporte de cumplimiento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E6E9E3}
+a{color:#1D6A47}a:hover{color:#14492F}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: Inter, system-ui, sans-serif; color: #15211B; background: #E6E9E3">
+  <nav aria-label="Principal" style="flex: 0 0 240px; width: 240px; background: #13261C; color: #E8EFE9; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 24px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke="#7BC59A" stroke-width="2"></path><path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke="#7BC59A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Synta</span>
+    </div>
+    <a href="Dashboard.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Panel</a>
+    <a href="Mapa.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Mapa y lotes</a>
+    <a href="Trazabilidad.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Trazabilidad</a>
+    <a href="Reporte.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #21402F; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">Pasaporte</a>
+    <a href="Accion.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Registrar acción</a>
+  </nav>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+  <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px 32px; background: #FFFFFF; border-bottom: 1px solid #DDE2DA">
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #C9D0C6; background: #FFFFFF; color: #15211B; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Compartir link</button>
+      <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 0; background: #1D6A47; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Descargar PDF</button>
+    </div>
+  </div>
+
+  <article style="width: 100%; max-width: 880px; margin: 32px auto 48px; background: #FFFFFF; box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 32px">
+    <header style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; padding-bottom: 24px; border-bottom: 2px solid #13261C">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <svg width="24" height="24" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke="#1D6A47" stroke-width="2"></path><path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke="#1D6A47" stroke-width="2" stroke-linecap="round"></path></svg>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px">Synta</span>
+        </div>
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; letter-spacing: -0.5px">Pasaporte de cumplimiento</h1>
+        <span style="font-size: 14px; color: #55615A">Establecimiento La Esperanza · Dpto. Río Seco, Córdoba, Argentina</span>
+        <span style="font-size: 13px; color: #55615A">Emitido 12/11/2026 · Campaña 2026/27 · N.º SYN-2026-000184</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+        <div role="img" aria-label="Código QR ilustrativo de verificación" style="display: grid; grid-template-columns: repeat(21, 5px); grid-auto-rows: 5px; padding: 6px; border: 1px solid #DDE2DA">
+          <sc-for list="{{qr}}" as="q" hint-placeholder-count="441"><span style="{{q.s}}"></span></sc-for>
+        </div>
+        <span style="font-size: 11px; color: #55615A">Verificar en synta.app/v/184</span>
+      </div>
+    </header>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 24px">
+      <svg viewBox="0 0 400 260" role="img" aria-label="Mapa de los 4 lotes del establecimiento" style="flex: 1 1 300px; min-width: 0; height: auto; border-radius: 8px">
+        <rect width="400" height="260" fill="#E9EDE4"></rect>
+        <polygon points="40,30 150,22 156,110 50,118" fill="#CFE3D5" stroke="#1D6A47" stroke-width="2"></polygon>
+        <polygon points="168,26 258,32 255,110 165,112" fill="#CFE3D5" stroke="#1D6A47" stroke-width="2"></polygon>
+        <polygon points="50,130 160,124 172,220 58,232" fill="#FBE3C3" stroke="#C2620E" stroke-width="2"></polygon>
+        <polygon points="182,128 285,120 300,210 186,222" fill="#F3D0CC" stroke="#B42318" stroke-width="2" stroke-dasharray="5 3"></polygon>
+        <line x1="52" y1="134" x2="160" y2="128" stroke="#D99A00" stroke-width="5"></line>
+        <line x1="104" y1="130" x2="112" y2="228" stroke="#D99A00" stroke-width="5" stroke-dasharray="6 3"></line>
+        <g font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#15211B"><text x="78" y="72">L1</text><text x="200" y="74">L2</text><text x="96" y="180">L3</text><text x="228" y="172">L4</text></g>
+      </svg>
+      <div style="flex: 1 1 260px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start">
+        <sc-for list="{{facts}}" as="f" hint-placeholder-count="4">
+          <div style="padding: 14px; border: 1px solid #DDE2DA; border-radius: 8px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #55615A">{{f.l}}</span><strong style="font-family: 'Space Grotesk', sans-serif; font-size: 22px">{{f.v}}</strong></div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 16px">Estado por eje regulatorio</h2>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px">
+          <thead><tr style="text-align: left; font-size: 12px; color: #55615A"><th style="padding: 10px 8px; border-bottom: 1px solid #DDE2DA">Eje</th><th style="padding: 10px 8px; border-bottom: 1px solid #DDE2DA">Normas evaluadas</th><th style="padding: 10px 8px; border-bottom: 1px solid #DDE2DA">Resultado</th><th style="padding: 10px 8px; border-bottom: 1px solid #DDE2DA">Observaciones</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ejes}}" as="e" hint-placeholder-count="4">
+              <tr><td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC; font-weight: 600">{{e.eje}}</td><td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC">{{e.normas}}</td><td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC"><span style="{{e.badge}}">{{e.res}}</span></td><td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC; color: #55615A">{{e.obs}}</td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 16px">Certificación objetivo: RTRS — plan para cerrar brechas</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+        <sc-for list="{{plan}}" as="p" hint-placeholder-count="3">
+          <div style="padding: 14px; border: 1px solid #DDE2DA; border-radius: 8px; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 14px">{{p.t}}</strong><span style="font-size: 13px; color: #55615A">{{p.d}}</span><span style="{{p.badge}}">{{p.st}}</span></div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #55615A">Biodiversidad del Lote 3: 64 hoy → 78 con el plan completo. Cada corredor implantado se registra y firma como evidencia para el certificador.</p>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 16px">Evidencia anclada en blockchain</h2>
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #F5F6F1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; overflow-wrap: anywhere">
+        <sc-for list="{{hashes}}" as="h" hint-placeholder-count="4"><span>{{h.k}} — {{h.v}}</span></sc-for>
+      </div>
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #55615A">Red: Polygon Amoy (testnet). Fuentes: Copernicus Sentinel-2 L2A, NASA FIRMS, capa OTBN Córdoba, declaraciones del productor. Este documento es un prototipo y no constituye una certificación oficial.</p>
+    </section>
+  </article>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tone = { ok: ['#E3F0E8', '#14492F'], warn: ['#FDF0DC', '#8A3F07'], bad: ['#FDE7E5', '#8F1C13'] };
+    const badge = (t) => 'white-space: nowrap; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: ' + tone[t][0] + '; color: ' + tone[t][1];
+    const qr = [];
+    const finder = (r, c) => {
+      for (const [r0, c0] of [[0, 0], [0, 14], [14, 0]]) {
+        const y = r - r0, x = c - c0;
+        if (y >= 0 && y < 7 && x >= 0 && x < 7) return y === 0 || y === 6 || x === 0 || x === 6 || (y >= 2 && y <= 4 && x >= 2 && x <= 4);
+      }
+      return null;
+    };
+    for (let r = 0; r < 21; r++) for (let c = 0; c < 21; c++) {
+      const f = finder(r, c);
+      const on = f === null ? ((r * 11 + c * 5 + r * c) % 5 < 2) : f;
+      qr.push({ s: 'display: block; background: ' + (on ? '#13261C' : '#FFFFFF') });
+    }
+    return {
+      qr,
+      plan: [
+        { t: 'A · Corredor borde norte', d: '1,2 ha · nativas autosustentables', st: 'Implantado', badge: badge('ok') },
+        { t: 'B · Corredor central N–S', d: '1,8 ha · conecta con monte del este', st: 'Planificado', badge: badge('warn') },
+        { t: 'C · Isla en el bajo', d: '1,2 ha · zona de menor rinde', st: 'Planificado', badge: badge('warn') }
+      ],
+      facts: [
+        { l: 'Superficie', v: '312 ha' }, { l: 'Lotes', v: '4' },
+        { l: 'Deforestación post 2020', v: '0 ha' }, { l: 'Biodiversidad', v: '68/100' }
+      ],
+      ejes: [
+        { eje: 'Provincial / zonal', normas: 'OTBN Córdoba; distancias de aplicación', res: 'Cumple', badge: badge('ok'), obs: 'Falta registro de aplicaciones (L3)' },
+        { eje: 'Nacional', normas: 'Ley 26.331; RENSPA', res: 'Cumple', badge: badge('ok'), obs: '—' },
+        { eje: 'Internacional', normas: 'EUDR: geolocalización, no deforestación, legalidad', res: 'Parcial', badge: badge('warn'), obs: 'Legalidad pendiente en L4' },
+        { eje: 'Certificaciones', normas: 'RTRS (objetivo); ISCC', res: 'Con brechas', badge: badge('bad'), obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' }
+      ],
+      hashes: [
+        { k: 'Polígonos (4 lotes)', v: '0x44c0a8…e29f12' },
+        { k: 'Cobertura 2020→2026', v: '0x5a07c1…b0e3d1' },
+        { k: 'Biodiversidad', v: '0x91bd5e…f204aa' },
+        { k: 'Este pasaporte', v: '0xa3f19c…e8c21e' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -76,3 +76,18 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
 **Mínimo para la demo:** 3 → 4 → 5 → 6, con 2 como home. 7 y 8 si sobra tiempo.
 
 **Guion de demo:** dibujo un lote → elijo la certificación → veo qué me falta y los corredores recomendados → muestro el QR que vería el comprador europeo.
+
+### Cómo correrlo
+
+```bash
+pnpm install
+pnpm dev        # http://localhost:5173
+pnpm build      # typecheck + build de producción
+```
+
+Monorepo (pnpm workspaces):
+
+- `apps/web` — app React + Vite + TS. Una pantalla por archivo en `src/screens/`, rutas en `src/App.tsx`.
+- `packages/ui` — tokens CSS, sidebar/layout y primitivas compartidas (`Badge`, `ProgressBar`, `FakeQR`, `sha256`).
+- `packages/data` — datos mock (lotes, certificaciones, corredores, eventos). Única fuente de datos hasta que haya backend.
+- `design/` — mockups de referencia de cada pantalla.

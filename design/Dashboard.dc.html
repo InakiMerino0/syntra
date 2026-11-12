@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Synta — Panel del establecimiento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F1}
+a{color:#1D6A47}a:hover{color:#14492F}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: Inter, system-ui, sans-serif; color: #15211B; background: #F5F6F1">
+  <nav aria-label="Principal" style="flex: 0 0 240px; width: 240px; background: #13261C; color: #E8EFE9; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 24px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke="#7BC59A" stroke-width="2"></path><path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke="#7BC59A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Synta</span>
+    </div>
+    <a href="Dashboard.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #21402F; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">Panel</a>
+    <a href="Mapa.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Mapa y lotes</a>
+    <a href="Trazabilidad.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Trazabilidad</a>
+    <a href="Reporte.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Pasaporte</a>
+    <a href="Accion.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Registrar acción</a>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px; max-width: 1400px">
+    <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; color: #55615A">Dpto. Río Seco, Córdoba · RENSPA 14.123.0.00456/00</span>
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; letter-spacing: -0.5px">Establecimiento La Esperanza</h1>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+        <span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FDF0DC; color: #8A3F07; font-weight: 600">Datos de demostración</span>
+        <a href="Mapa.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 8px; background: #1D6A47; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">+ Nuevo lote</a>
+      </div>
+    </header>
+
+    <section aria-label="Resumen" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+        <div style="background: #FFFFFF; border: 1px solid #DDE2DA; border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: #55615A">{{k.label}}</span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 600">{{k.value}}</span>
+          <span style="font-size: 12px; color: #55615A">{{k.sub}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section aria-labelledby="obj" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; background: #13261C; color: #E8EFE9; border-radius: 12px; padding: 24px 28px">
+      <div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 320px">
+        <span id="obj" style="font-size: 13px; color: #9FB3A6">Certificación objetivo</span>
+        <strong style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600">RTRS · soja responsable</strong>
+        <span style="font-size: 14px; color: #C3D2C8">2 de 5 requisitos cumplidos en el Lote 3 · 2 brechas de biodiversidad · 1 dato faltante</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 240px">
+        <span style="font-size: 13px; color: #9FB3A6">Plan de corredores sugerido</span>
+        <strong style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600">4,2 ha</strong>
+        <span style="font-size: 14px; color: #C3D2C8">biodiversidad 64 → 78 · rinde soja +14%*</span>
+      </div>
+      <a href="Lote.dc.html" style="display: flex; align-items: center; height: 48px; padding: 0 20px; border-radius: 8px; background: #7BC59A; color: #13261C; font-weight: 700; font-size: 15px; text-decoration: none">Ver qué me falta</a>
+    </section>
+
+    <section aria-labelledby="ejes" style="display: flex; flex-direction: column; gap: 12px">
+      <h2 id="ejes" style="margin: 0; font-size: 16px; font-weight: 600">Cumplimiento por eje</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+        <sc-for list="{{ejes}}" as="e" hint-placeholder-count="4">
+          <div style="background: #FFFFFF; border: 1px solid #DDE2DA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+              <span style="font-size: 14px; font-weight: 600">{{e.name}}</span>
+              <span style="{{e.badgeStyle}}">{{e.status}}</span>
+            </div>
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 600; line-height: 1">{{e.pct}}%</span>
+            <div style="height: 8px; border-radius: 4px; background: #EEF1EC; overflow: hidden"><div style="{{e.barStyle}}"></div></div>
+            <span style="font-size: 12px; color: #55615A">{{e.detail}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-labelledby="lotes" style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE2DA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 id="lotes" style="margin: 0; font-size: 16px; font-weight: 600">Lotes</h2>
+          <a href="Mapa.dc.html" style="font-size: 13px; font-weight: 600">Ver en mapa</a>
+        </div>
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px">
+            <thead>
+              <tr style="text-align: left; color: #55615A; font-size: 12px">
+                <th style="padding: 10px 8px; font-weight: 600; border-bottom: 1px solid #DDE2DA">Lote</th>
+                <th style="padding: 10px 8px; font-weight: 600; border-bottom: 1px solid #DDE2DA">Cultivo</th>
+                <th style="padding: 10px 8px; font-weight: 600; border-bottom: 1px solid #DDE2DA">Superficie</th>
+                <th style="padding: 10px 8px; font-weight: 600; border-bottom: 1px solid #DDE2DA">Biodiversidad</th>
+                <th style="padding: 10px 8px; font-weight: 600; border-bottom: 1px solid #DDE2DA">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{lotes}}" as="l" hint-placeholder-count="4">
+                <tr>
+                  <td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC"><a href="Lote.dc.html" style="font-weight: 600; text-decoration: none">{{l.name}}</a></td>
+                  <td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC">{{l.crop}}</td>
+                  <td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC">{{l.ha}} ha</td>
+                  <td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC; font-family: 'JetBrains Mono', monospace">{{l.bio}}/100</td>
+                  <td style="padding: 12px 8px; border-bottom: 1px solid #EEF1EC"><span style="{{l.badgeStyle}}">{{l.status}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <section aria-labelledby="bio" style="background: #FFFFFF; border: 1px solid #DDE2DA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 id="bio" style="margin: 0; font-size: 16px; font-weight: 600">Índice de biodiversidad</h2>
+          <div style="display: flex; align-items: baseline; gap: 8px">
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 48px; font-weight: 600; line-height: 1; color: #1D6A47">68</span>
+            <span style="font-size: 14px; color: #55615A">/ 100 · +4 vs campaña anterior</span>
+          </div>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #55615A">Promedio ponderado por superficie. Con los corredores sugeridos sube a 78. *Rinde según estudios del equipo [FUENTE A CITAR].</p>
+        </section>
+        <section aria-labelledby="ult" style="background: #FFFFFF; border: 1px solid #DDE2DA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h2 id="ult" style="margin: 0; font-size: 16px; font-weight: 600">Últimos registros firmados</h2>
+            <a href="Trazabilidad.dc.html" style="font-size: 13px; font-weight: 600">Ver todo</a>
+          </div>
+          <sc-for list="{{eventos}}" as="ev" hint-placeholder-count="4">
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #1D6A47; margin-top: 5px; flex: 0 0 auto"></span>
+              <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">{{ev.title}}</span>
+                <span style="font-size: 12px; color: #55615A">{{ev.when}} · <span style="font-family: 'JetBrains Mono', monospace">{{ev.hash}}</span></span>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tone = {
+      ok: { bg: '#E3F0E8', fg: '#14492F', bar: '#1D6A47' },
+      warn: { bg: '#FDF0DC', fg: '#8A3F07', bar: '#C2620E' },
+      bad: { bg: '#FDE7E5', fg: '#8F1C13', bar: '#B42318' }
+    };
+    const badge = (t) => 'font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: ' + tone[t].bg + '; color: ' + tone[t].fg;
+    const ejes = [
+      { name: 'Provincial / zonal', pct: 92, t: 'ok', status: 'Cumple', detail: 'OTBN Córdoba · 1 dato pendiente' },
+      { name: 'Nacional', pct: 100, t: 'ok', status: 'Cumple', detail: 'Ley 26.331 · RENSPA vigente' },
+      { name: 'Internacional (EUDR)', pct: 78, t: 'warn', status: 'Faltan datos', detail: 'Falta prueba de legalidad del Lote 4' },
+      { name: 'Certificaciones', pct: 40, t: 'bad', status: 'Con brechas', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad' }
+    ].map((e) => ({ ...e, badgeStyle: badge(e.t), barStyle: 'height: 100%; width: ' + e.pct + '%; background: ' + tone[e.t].bar }));
+    const lotes = [
+      { name: 'Lote 1 — La Loma', crop: 'Maíz', ha: 96, bio: 71, t: 'ok', status: 'Certificado' },
+      { name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, bio: 66, t: 'ok', status: 'Certificado' },
+      { name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, t: 'warn', status: 'Revisar' },
+      { name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, bio: 74, t: 'bad', status: 'Sin analizar' }
+    ].map((l) => ({ ...l, badgeStyle: badge(l.t) }));
+    return {
+      ejes, lotes,
+      kpis: [
+        { label: 'Superficie mapeada', value: '312 ha', sub: '4 lotes' },
+        { label: 'Registros firmados', value: '128', sub: 'en Polygon (testnet)' },
+        { label: 'Último análisis satelital', value: 'Hoy', sub: 'Sentinel-2 · 10 m' },
+        { label: 'Deforestación post 2020', value: '0 ha', sub: 'detectada en el establecimiento' }
+      ],
+      eventos: [
+        { title: 'Lote 3 — NDVI firmado', when: 'Hace 2 h', hash: '0x7f3a…c21e' },
+        { title: 'Lote 3 — Análisis de biodiversidad', when: 'Hace 2 h', hash: '0x91bd…04aa' },
+        { title: 'Lote 1 — Siembra registrada', when: 'Ayer', hash: '0x2c88…7e10' },
+        { title: 'Lote 2 — Cambio de cobertura 2020–2026', when: '10/11', hash: '0xd4e2…5b93' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

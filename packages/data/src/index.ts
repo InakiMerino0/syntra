@@ -1,0 +1,145 @@
+// Mock data for the prototype. Single source of truth for every screen. No backend yet.
+export type Tone = 'ok' | 'warn' | 'bad';
+export type LatLng = [number, number];
+
+export const establecimiento = {
+  name: 'Establecimiento La Esperanza',
+  location: 'Dpto. Río Seco, Córdoba',
+  renspa: '14.123.0.00456/00',
+  totalHa: 312,
+  center: [-30.121, -63.483] as LatLng,
+  biodiversity: 68,
+};
+
+export interface Lote {
+  id: string;
+  name: string;
+  crop: string;
+  ha: number;
+  bio: number;
+  status: string;
+  tone: Tone;
+  note: string;
+  polygon: LatLng[];
+}
+
+export const lotes: Lote[] = [
+  { id: 'l1', name: 'Lote 1 — La Loma', crop: 'Maíz', ha: 96, bio: 71, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 3 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.495], [-30.110, -63.485], [-30.119, -63.485], [-30.119, -63.495]] },
+  { id: 'l2', name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, bio: 66, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 2 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.484], [-30.110, -63.476], [-30.118, -63.476], [-30.118, -63.484]] },
+  { id: 'l3', name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, status: 'Con brechas', tone: 'warn', note: 'Limita con bosque nativo al este. 2 brechas de biodiversidad para RTRS.', polygon: [[-30.121, -63.495], [-30.121, -63.485], [-30.130, -63.484], [-30.131, -63.494]] },
+  { id: 'l4', name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, bio: 74, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo. Revisar superposición con zona de bosque protegido.', polygon: [[-30.121, -63.484], [-30.121, -63.477], [-30.129, -63.476], [-30.130, -63.483]] },
+];
+
+export const capas = {
+  bosqueNativo: [[-30.120, -63.476], [-30.120, -63.466], [-30.134, -63.466], [-30.134, -63.475]] as LatLng[],
+  focosCalor: [[-30.126, -63.470], [-30.131, -63.469]] as LatLng[],
+};
+
+export const kpis = [
+  { label: 'Superficie mapeada', value: '312 ha', sub: '4 lotes' },
+  { label: 'Registros firmados', value: '128', sub: 'en Polygon (testnet)' },
+  { label: 'Último análisis satelital', value: 'Hoy', sub: 'Sentinel-2 · 10 m' },
+  { label: 'Deforestación post 2020', value: '0 ha', sub: 'detectada en el establecimiento' },
+];
+
+export const ejes = [
+  { name: 'Provincial / zonal', pct: 92, tone: 'ok' as Tone, status: 'Cumple', detail: 'OTBN Córdoba · 1 dato pendiente' },
+  { name: 'Nacional', pct: 100, tone: 'ok' as Tone, status: 'Cumple', detail: 'Ley 26.331 · RENSPA vigente' },
+  { name: 'Internacional (EUDR)', pct: 78, tone: 'warn' as Tone, status: 'Faltan datos', detail: 'Falta prueba de legalidad del Lote 4' },
+  { name: 'Certificaciones', pct: 40, tone: 'bad' as Tone, status: 'Con brechas', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad' },
+];
+
+export type ReqStatus = 'ok' | 'warn' | 'bad'; // ok=Cumple, warn=Falta dato, bad=Brecha
+export const reqLabel: Record<ReqStatus, string> = { ok: 'Cumple', warn: 'Falta dato', bad: 'Brecha' };
+
+export interface Requisito { rule: string; evidence: string; status: ReqStatus; fix?: string }
+export interface Certificacion { id: string; label: string; desc: string; items: Requisito[] }
+
+/** Requirements per standard (illustrative — validate against the official standards before the pitch). */
+export const certificaciones: Certificacion[] = [
+  { id: 'rtrs', label: 'RTRS (soja responsable)', desc: 'Estándar internacional para soja; exige conservar y restaurar vegetación nativa y un plan de biodiversidad.', items: [
+    { rule: 'Sin conversión de ecosistemas naturales', evidence: 'cambio de cobertura firmado 0x5a07…', status: 'ok' },
+    { rule: 'Geolocalización de los lotes', evidence: 'polígono firmado 0x44c0…', status: 'ok' },
+    { rule: 'Áreas de vegetación nativa mantenidas o restauradas', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar 4,2 ha de corredores (A, B y C).' },
+    { rule: 'Plan de manejo de biodiversidad', evidence: 'no hay plan cargado', status: 'bad', fix: 'Synta lo genera a partir del diagnóstico y los corredores elegidos.' },
+    { rule: 'Buenas prácticas de aplicación de fitosanitarios', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones en "Registrar acción".' },
+  ] },
+  { id: 'eudr', label: 'EUDR (Unión Europea)', desc: 'Reglamento europeo de deforestación: geolocalización, no deforestación posterior al 31/12/2020 y legalidad.', items: [
+    { rule: 'Geolocalización de la parcela', evidence: 'polígono firmado 0x44c0…', status: 'ok' },
+    { rule: 'Sin deforestación posterior al 31/12/2020', evidence: 'Sentinel-2 2020 vs 2026: 0 ha', status: 'ok' },
+    { rule: 'Legalidad de la producción', evidence: 'documentación no cargada', status: 'warn', fix: 'cargar RENSPA y titularidad o contrato de arrendamiento.' },
+  ] },
+  { id: 'iscc', label: 'ISCC', desc: 'Certificación de sustentabilidad para biocombustibles y cadenas agroindustriales.', items: [
+    { rule: 'Sin uso de tierras de alto valor de biodiversidad', evidence: 'superposición 0 ha con áreas protegidas', status: 'ok' },
+    { rule: 'Medidas de protección de la biodiversidad', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar corredores A y B (3,0 ha).' },
+    { rule: 'Registro de insumos y emisiones', evidence: 'sin registros de insumos', status: 'warn', fix: 'registrar siembra y fertilización.' },
+  ] },
+  { id: 'local', label: 'Marco provincial y nacional', desc: 'Ordenamiento de bosque nativo de Córdoba y Ley 26.331 de Bosques.', items: [
+    { rule: 'OTBN Córdoba: sin intervención en zonas protegidas', evidence: 'superposición 0 ha con capa OTBN', status: 'ok' },
+    { rule: 'Ley 26.331: sin desmonte de bosque nativo', evidence: 'cambio de cobertura 2020–2026', status: 'ok' },
+    { rule: 'Distancias de aplicación de fitosanitarios', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones con ubicación.' },
+  ] },
+];
+
+export interface Corredor { id: string; title: string; ha: number; impact: number; body: string; closes: string; status: 'Implantado' | 'Planificado'; line: LatLng[] }
+
+export const corredores: Corredor[] = [
+  { id: 'A', title: 'A · Corredor borde norte', ha: 1.2, impact: 6, body: 'Franja de 10 m × 1.200 m con especies nativas autosustentables.', closes: 'Cierra: vegetación nativa (RTRS)', status: 'Implantado', line: [[-30.1215, -63.4945], [-30.1215, -63.4852]] },
+  { id: 'B', title: 'B · Corredor central N–S', ha: 1.8, impact: 5, body: 'Franja que conecta el borde norte con el monte del este.', closes: 'Cierra: protección de biodiversidad (ISCC)', status: 'Planificado', line: [[-30.1215, -63.4900], [-30.1300, -63.4890], [-30.1290, -63.4760]] },
+  { id: 'C', title: 'C · Isla de vegetación en el bajo', ha: 1.2, impact: 3, body: 'En la zona de menor rinde histórico (NDVI bajo) del lote.', closes: 'Suma al plan de biodiversidad (RTRS)', status: 'Planificado', line: [[-30.1270, -63.4930], [-30.1280, -63.4915]] },
+];
+
+export const biodiversidadLote3 = {
+  actual: 64,
+  proyectado: 78,
+  breakdown: [
+    { label: 'Cobertura nativa en 500 m', from: 58, to: 70 },
+    { label: 'Conectividad (bordes y corredores)', from: 61, to: 82 },
+    { label: 'Heterogeneidad del paisaje', from: 73, to: 81 },
+  ],
+  rinde: { cultivo: 'soja', pct: 14, fuente: '[FUENTE A CITAR] estudios del equipo sobre corredores funcionales' },
+};
+
+/** NDVI mean per scene, 2024 → 2026. */
+export const ndviSerie = [0.22, 0.3, 0.48, 0.7, 0.81, 0.76, 0.5, 0.28, 0.2, 0.25, 0.36, 0.58, 0.78, 0.82, 0.7, 0.45, 0.27, 0.22, 0.31, 0.52, 0.74];
+
+export type EventKind = 'sat' | 'bio' | 'prod' | 'lote';
+export interface Evento { id: number; kind: EventKind; title: string; lote: string; date: string; source: string; hash: string; block: string }
+
+export const eventos: Evento[] = [
+  { id: 8, kind: 'prod', title: 'Corredor A implantado · 1,2 ha de nativas', lote: 'Lote 3', date: '12/11/2026 16:05', source: 'Productor + foto georreferenciada', hash: '0x0c5f2b…d1a930', block: '#58.216.441' },
+  { id: 9, kind: 'bio', title: 'Plan de corredores propuesto · 4,2 ha (RTRS)', lote: 'Lote 3', date: '12/11/2026 14:33', source: 'Synta · algoritmo v0.3', hash: '0x3be14c…a077d0', block: '#58.214.908' },
+  { id: 1, kind: 'bio', title: 'Análisis de biodiversidad 64/100', lote: 'Lote 3', date: '12/11/2026 14:32', source: 'Synta · algoritmo v0.3', hash: '0x91bd5e…f204aa', block: '#58.214.907' },
+  { id: 2, kind: 'sat', title: 'NDVI medio 0,70', lote: 'Lote 3', date: '12/11/2026 14:31', source: 'Sentinel-2 L2A (Copernicus)', hash: '0x7f3a02…98c21e', block: '#58.214.906' },
+  { id: 3, kind: 'sat', title: 'Cambio de cobertura 2020 → 2026: 0 ha', lote: 'Lote 3', date: '12/11/2026 14:31', source: 'Sentinel-2 L2A (Copernicus)', hash: '0x5a07c1…b0e3d1', block: '#58.214.906' },
+  { id: 4, kind: 'sat', title: 'Sin focos de calor en el lote', lote: 'Lote 3', date: '12/11/2026 14:30', source: 'NASA FIRMS', hash: '0xe1f49a…3d72b5', block: '#58.214.905' },
+  { id: 5, kind: 'prod', title: 'Siembra de maíz · 96 ha', lote: 'Lote 1', date: '11/11/2026 09:10', source: 'Declaración del productor', hash: '0x2c8817…a47e10', block: '#58.180.122' },
+  { id: 6, kind: 'prod', title: 'Siembra de soja · 86 ha', lote: 'Lote 3', date: '02/10/2026 08:45', source: 'Declaración del productor', hash: '0x6b30de…19c4f8', block: '#57.402.310' },
+  { id: 7, kind: 'lote', title: 'Polígono del lote creado · 86,2 ha', lote: 'Lote 3', date: '15/09/2026 17:02', source: 'Productor', hash: '0x44c0a8…e29f12', block: '#56.950.004' },
+];
+
+export const eventKinds: Record<EventKind, { label: string; color: string }> = {
+  sat: { label: 'Satelital', color: '#1E5AA8' },
+  bio: { label: 'Biodiversidad', color: '#1D6A47' },
+  prod: { label: 'Intervenciones', color: '#C2620E' },
+  lote: { label: 'Lotes', color: '#55615A' },
+};
+
+export const procesamientoPasos = [
+  { label: 'Obteniendo imágenes Sentinel-2', detail: '14 escenas · 2020-01 → 2026-11 · nubosidad < 20%' },
+  { label: 'Calculando índices', detail: 'NDVI, NDWI, cambio de cobertura vs. 31/12/2020' },
+  { label: 'Análisis de biodiversidad', detail: 'cobertura nativa · bordes · heterogeneidad → 64/100' },
+  { label: 'Comparando con la certificación objetivo', detail: 'RTRS · 5 requisitos · 2 brechas · 1 dato faltante' },
+  { label: 'Diseñando corredores biológicos', detail: '3 corredores · 4,2 ha · biodiversidad 64 → 78' },
+  { label: 'Generando hash SHA-256', detail: 'del diagnóstico completo' },
+  { label: 'Anclando en blockchain', detail: 'Polygon Amoy (simulado)' },
+];
+
+export const tiposAccion = [
+  { id: 'corredor', label: 'Corredor / vegetación nativa', f1: 'Corredor del plan', v1: 'A · borde norte', f2: 'Superficie implantada', v2: '1,2 ha' },
+  { id: 'siembra', label: 'Siembra', f1: 'Semilla / híbrido', v1: 'Soja DM 46R18', f2: 'Densidad', v2: '320.000 pl/ha' },
+  { id: 'fert', label: 'Fertilización', f1: 'Producto', v1: 'Urea 46-0-0', f2: 'Dosis', v2: '90 kg/ha' },
+  { id: 'fito', label: 'Aplicación fitosanitaria', f1: 'Producto', v1: 'Glifosato 66,2%', f2: 'Dosis', v2: '1,5 l/ha' },
+  { id: 'riego', label: 'Riego', f1: 'Fuente de agua', v1: 'Pozo 2', f2: 'Lámina', v2: '25 mm' },
+  { id: 'cosecha', label: 'Cosecha', f1: 'Destino', v1: 'Acopio Río Seco', f2: 'Rinde', v2: '3.400 kg/ha' },
+];

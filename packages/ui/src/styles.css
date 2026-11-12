@@ -1,0 +1,111 @@
+/* Synta design tokens + shared primitives. Screens should use these classes instead of re-inventing them. */
+:root {
+  --bg: #f5f6f1;
+  --surface: #ffffff;
+  --ink: #15211b;
+  --muted: #55615a;
+  --line: #dde2da;
+  --line-soft: #eef1ec;
+  --input: #c9d0c6;
+  --primary: #1d6a47;
+  --primary-ink: #14492f;
+  --primary-soft: #e3f0e8;
+  --dark: #13261c;
+  --dark-2: #21402f;
+  --dark-line: #2d4a39;
+  --dark-ink: #e8efe9;
+  --dark-muted: #9fb3a6;
+  --accent: #7bc59a;
+  --corridor: #ffd166;
+  --ok-bg: #e3f0e8; --ok-fg: #14492f; --ok-bar: #1d6a47;
+  --warn-bg: #fdf0dc; --warn-fg: #8a3f07; --warn-bar: #c2620e;
+  --bad-bg: #fde7e5; --bad-fg: #8f1c13; --bad-bar: #b42318;
+  --font: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --radius: 12px;
+  --sidebar-w: 240px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
+a { color: var(--primary); }
+a:hover { color: var(--primary-ink); }
+h1, h2, h3 { margin: 0; }
+
+/* Layout */
+.app { min-height: 100vh; display: flex; }
+.sidebar {
+  flex: 0 0 var(--sidebar-w); width: var(--sidebar-w);
+  position: sticky; top: 0; height: 100vh;
+  background: var(--dark); color: var(--dark-ink);
+  padding: 24px 16px; display: flex; flex-direction: column; gap: 4px;
+}
+.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 12px 24px; font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--dark-ink); text-decoration: none; }
+.sidebar a.nav-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #c9d6cd; font-size: 14px; text-decoration: none; }
+.sidebar a.nav-link:hover { background: #1a3326; color: #fff; }
+.sidebar a.nav-link.active { background: var(--dark-2); color: #fff; font-weight: 600; }
+.sidebar-foot { margin-top: auto; padding: 12px; font-size: 12px; color: var(--dark-muted); }
+.content { flex: 1 1 auto; min-width: 0; }
+.page { padding: 32px 40px 48px; max-width: 1400px; display: flex; flex-direction: column; gap: 24px; }
+.page-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.page-title { font-family: var(--font-display); font-size: 34px; font-weight: 600; letter-spacing: -0.5px; }
+.section-title { font-size: 16px; font-weight: 600; }
+
+@media (max-width: 800px) {
+  .app { flex-direction: column; }
+  .sidebar { position: static; height: auto; width: 100%; flex-basis: auto; flex-direction: row; flex-wrap: wrap; padding: 12px; }
+  .sidebar-logo { padding: 0 12px; }
+  .sidebar-foot { display: none; }
+  .page { padding: 20px 16px 32px; }
+}
+
+/* Primitives */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.card-dark { background: var(--dark); color: var(--dark-ink); border-radius: var(--radius); padding: 24px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--font-mono); }
+.display { font-family: var(--font-display); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; gap: 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid transparent;
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-ink); color: #fff; }
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--input); }
+.btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
+.btn-accent { background: var(--accent); color: var(--dark); font-weight: 700; }
+.btn-accent:hover { background: #a6dcbb; color: var(--dark); }
+.btn-ghost-dark { background: transparent; color: var(--dark-ink); border-color: #4f6e5b; }
+
+.chip { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--input); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.chip[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.badge { display: inline-block; white-space: nowrap; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+.badge-ok { background: var(--ok-bg); color: var(--ok-fg); }
+.badge-warn { background: var(--warn-bg); color: var(--warn-fg); }
+.badge-bad { background: var(--bad-bg); color: var(--bad-fg); }
+
+.bar { height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--ok-bar); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; }
+.input { height: 44px; border: 1px solid var(--input); border-radius: 8px; padding: 0 12px; font-size: 15px; font-family: inherit; background: #fff; }
+textarea.input { height: auto; padding: 10px 12px; resize: vertical; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab { min-height: 44px; padding: 0 18px; border: 0; background: transparent; font-family: inherit; font-size: 15px; cursor: pointer; margin-bottom: -1px; border-bottom: 3px solid transparent; color: var(--muted); font-weight: 500; }
+.tab[aria-selected='true'] { border-bottom-color: var(--primary); color: var(--primary-ink); font-weight: 700; }
+
+table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--line); }
+table.table td { padding: 12px 8px; border-bottom: 1px solid var(--line-soft); }
+.table-wrap { overflow-x: auto; }
+
+:focus-visible { outline: 3px solid #4c9bd6; outline-offset: 2px; }

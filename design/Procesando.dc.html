@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Synta — Procesando lote</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#13261C}
+a{color:#7BC59A}a:hover{color:#A6DCBB}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: Inter, system-ui, sans-serif; color: #E8EFE9; background: #0F1F17">
+  <nav aria-label="Principal" style="flex: 0 0 240px; width: 240px; background: #13261C; color: #E8EFE9; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 24px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke="#7BC59A" stroke-width="2"></path><path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke="#7BC59A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Synta</span>
+    </div>
+    <a href="Dashboard.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Panel</a>
+    <a href="Mapa.dc.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; background: #21402F; color: #FFFFFF; font-weight: 600; font-size: 14px; text-decoration: none">Mapa y lotes</a>
+    <a href="Trazabilidad.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Trazabilidad</a>
+    <a href="Reporte.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Pasaporte</a>
+    <a href="Accion.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #C9D6CD; font-size: 14px; text-decoration: none">Registrar acción</a>
+  </nav>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 16px; box-sizing: border-box; gap: 28px">
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+    <span style="font-size: 13px; color: #9FB3A6; letter-spacing: 0.5px; text-transform: uppercase">Analizando y certificando</span>
+    <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 600">Lote 3 — El Bajo · 86 ha</h1>
+  </div>
+
+  <ol aria-live="polite" style="list-style: none; margin: 0; padding: 28px; width: 100%; max-width: 560px; box-sizing: border-box; background: #1A3326; border: 1px solid #2D4A39; border-radius: 16px; display: flex; flex-direction: column; gap: 4px">
+    <sc-for list="{{steps}}" as="st" hint-placeholder-count="7">
+      <li style="display: flex; gap: 16px; align-items: flex-start; padding: 10px 0">
+        <span style="{{st.dotStyle}}">
+          <sc-if value="{{st.done}}" hint-placeholder-val="{{ true }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#13261C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12 L10 17 L19 7"></path></svg>
+          </sc-if>
+          <sc-if value="{{st.active}}" hint-placeholder-val="{{ false }}">
+            <span style="width: 16px; height: 16px; border: 3px solid #7BC59A; border-top-color: transparent; border-radius: 50%; box-sizing: border-box; animation: spin 0.8s linear infinite"></span>
+          </sc-if>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+          <span style="{{st.labelStyle}}">{{st.label}}</span>
+          <span style="font-size: 12px; color: #9FB3A6; font-family: 'JetBrains Mono', monospace; overflow-wrap: anywhere">{{st.detail}}</span>
+        </span>
+      </li>
+    </sc-for>
+  </ol>
+
+  <sc-if value="{{finished}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center">
+      <span style="font-size: 14px; color: #C3D2C8">Registro anclado en el bloque <span style="font-family: 'JetBrains Mono', monospace; color: #E8EFE9">#58.214.907</span></span>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center">
+        <a href="Lote.dc.html" style="display: flex; align-items: center; height: 48px; padding: 0 22px; border-radius: 8px; background: #7BC59A; color: #13261C; font-weight: 700; font-size: 15px; text-decoration: none">Ver qué me falta para certificar</a>
+        <button type="button" onClick="{{restart}}" style="height: 48px; padding: 0 22px; border-radius: 8px; border: 1px solid #4F6E5B; background: transparent; color: #E8EFE9; font-weight: 600; font-size: 15px; font-family: inherit; cursor: pointer">Repetir animación</button>
+      </div>
+    </div>
+  </sc-if>
+  <a href="Mapa.dc.html" style="font-size: 14px">Volver al mapa</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { step: 0 }; }
+  componentDidMount() { this.start(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  start() {
+    clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      if (this.state.step >= 7) { clearInterval(this.timer); return; }
+      this.setState({ step: this.state.step + 1 });
+    }, 900);
+  }
+  renderVals() {
+    const n = this.state.step;
+    const list = [
+      { label: 'Obteniendo imágenes Sentinel-2', detail: '14 escenas · 2020-01 → 2026-11 · nubosidad < 20%' },
+      { label: 'Calculando índices', detail: 'NDVI, NDWI, cambio de cobertura vs. 31/12/2020' },
+      { label: 'Análisis de biodiversidad', detail: 'cobertura nativa · bordes · heterogeneidad → 64/100' },
+      { label: 'Comparando con la certificación objetivo', detail: 'RTRS · 5 requisitos · 2 brechas · 1 dato faltante' },
+      { label: 'Diseñando corredores biológicos', detail: '3 corredores · 4,2 ha · biodiversidad 64 → 78' },
+      { label: 'Generando hash SHA-256', detail: 'a3f1 9c0e 7b2d 44e8 … c21e' },
+      { label: 'Anclando en blockchain', detail: 'Polygon Amoy · tx 0x7f3a…c21e' }
+    ];
+    const steps = list.map((s, i) => {
+      const done = i < n, active = i === n;
+      return {
+        ...s, done, active,
+        dotStyle: 'width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; box-sizing: border-box; ' + (done ? 'background: #7BC59A' : active ? 'border: 2px solid #7BC59A' : 'border: 2px solid #3D5A48'),
+        labelStyle: 'font-size: 16px; font-weight: ' + (active ? '700' : '500') + '; color: ' + (done || active ? '#E8EFE9' : '#7F9787')
+      };
+    });
+    return { steps, finished: n >= 7, restart: () => { this.setState({ step: 0 }); this.start(); } };
+  }
+}
+</script>
+</body>
+</html>

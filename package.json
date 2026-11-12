@@ -1,0 +1,10 @@
+{
+  "name": "synta",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @synta/web dev",
+    "build": "pnpm --filter @synta/web build",
+    "typecheck": "pnpm --filter @synta/web typecheck"
+  },
+  "packageManager": "pnpm@11.1.2"
+}
