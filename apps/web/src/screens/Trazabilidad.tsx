@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FakeQR, sha256, shortHash } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
@@ -11,18 +11,40 @@ const resumen = [
   ['Deforestación post 2020', '0 ha'],
   ['Registros íntegros', '128 / 128'],
 ];
+const DEMO_ID = 8; // record that can be tampered with in the demo
+const payloadDe = (e: Evento, date = e.date) => JSON.stringify({ title: e.title, lote: e.lote, date, source: e.source });
 const kinds = Object.entries(eventKinds) as [EventKind, { label: string; color: string }][];
 
 export default function Trazabilidad() {
   const [filter, setFilter] = useState<EventKind | 'all'>('all');
-  // id → 'busy' while verifying, then the recomputed hash
+  // id → 'busy' while verifying, then 'ok' | 'bad'
   const [checks, setChecks] = useState<Record<number, string>>({});
+  // id → hash anchored at "signing" time, computed from the original record
+  const [anclados, setAnclados] = useState<Record<number, string>>({});
+  const [alterado, setAlterado] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    let alive = true;
+    Promise.all(eventos.map(async (e) => [e.id, await sha256(payloadDe(e))] as const)).then((pairs) => {
+      if (alive) setAnclados(Object.fromEntries(pairs));
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const fechaActual = (e: Evento) => (alterado && e.id === DEMO_ID ? '13/11/2026 09:00' : e.date);
+
   async function verify(e: Evento) {
+    const anclado = anclados[e.id];
+    if (!anclado) return;
     setChecks((c) => ({ ...c, [e.id]: 'busy' }));
-    const [hash] = await Promise.all([sha256(JSON.stringify(e)), new Promise((r) => setTimeout(r, 600))]);
-    setChecks((c) => ({ ...c, [e.id]: hash }));
+    const [hash] = await Promise.all([sha256(payloadDe(e, fechaActual(e))), new Promise((r) => setTimeout(r, 600))]);
+    setChecks((c) => ({ ...c, [e.id]: shortHash(hash) === shortHash(anclado) ? 'ok' : 'bad' }));
+  }
+
+  function toggleAlteracion() {
+    setAlterado((v) => !v);
+    setChecks((c) => { const n = { ...c }; delete n[DEMO_ID]; return n; });
   }
 
   async function copy() {
@@ -67,17 +89,29 @@ export default function Trazabilidad() {
                     <strong style={{ fontSize: 15 }}>{e.title}</strong>
                     <span className="muted" style={{ fontSize: 12 }}>{e.lote} · {eventKinds[e.kind].label}</span>
                   </div>
-                  <span className="muted" style={{ fontSize: 13 }}>{e.date} · Fuente: {e.source}</span>
-                  <span className="mono" style={{ fontSize: 12, color: '#3A4A41', overflowWrap: 'anywhere' }}>hash {e.hash} · bloque {e.block}</span>
+                  <span className="muted" style={{ fontSize: 13 }}>{fechaActual(e)} · Fuente: {e.source}</span>
+                  <span className="mono" style={{ fontSize: 12, color: '#3A4A41', overflowWrap: 'anywhere' }}>hash anclado {anclados[e.id] ? shortHash(anclados[e.id]) : 'calculando…'} · bloque {e.block}</span>
+                  {e.id === DEMO_ID && (
+                    <button type="button" className="chip" style={{ minHeight: 44, alignSelf: 'flex-start', fontSize: 13 }} aria-pressed={alterado} onClick={toggleAlteracion}>
+                      {alterado ? 'Restaurar registro original' : 'Simular alteración'}
+                    </button>
+                  )}
                 </div>
                 <div aria-live="polite" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>
-                  {st && st !== 'busy' ? (
-                    <span title={`SHA-256 recalculado: ${st}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--ok-fg)' }}>
+                  {st === 'ok' && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--ok-fg)' }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12 L10 17 L19 7" /></svg>
-                      Íntegro <span className="mono muted" style={{ fontWeight: 400, fontSize: 11 }}>{shortHash(st)}</span>
+                      Íntegro ✓ <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>recalculado = anclado</span>
                     </span>
-                  ) : (
-                    <button type="button" className="btn btn-secondary" style={{ fontSize: 13, padding: '0 14px' }} disabled={st === 'busy'} onClick={() => verify(e)} aria-label={`Verificar: ${e.title}`}>
+                  )}
+                  {st === 'bad' && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--bad-fg, #B42318)' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
+                      Alterado ✗ <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>el hash recalculado no coincide</span>
+                    </span>
+                  )}
+                  {st !== 'ok' && st !== 'bad' && (
+                    <button type="button" className="btn btn-secondary" style={{ fontSize: 13, padding: '0 14px' }} disabled={st === 'busy' || !anclados[e.id]} onClick={() => verify(e)} aria-label={`Verificar: ${e.title}`}>
                       {st === 'busy' ? 'Verificando…' : 'Verificar'}
                     </button>
                   )}

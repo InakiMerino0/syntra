@@ -1,11 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Badge, ProgressBar } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
-import { ecorregion, establecimiento, kpis, ejes, lotes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
+import { useLotes } from '../store/lotes';
+import { ecorregion, establecimiento, kpis, ejes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
 
 const rtrs = certificaciones.find((c) => c.id === 'rtrs')!;
 const count = (s: string) => rtrs.items.filter((i) => i.status === s).length;
-const corredoresHa = corredores.reduce((sum, c) => sum + c.ha, 0).toLocaleString('es-AR', { maximumFractionDigits: 1 });
+const fmtHa = (n: number) => n.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+const corredoresHa = fmtHa(corredores.reduce((sum, c) => sum + c.ha, 0));
+const corredoresImplantadasHa = fmtHa(corredores.filter((c) => c.status === 'Implantado').reduce((sum, c) => sum + c.ha, 0));
+const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 const bio = biodiversidadLote3;
 
 const sub = { fontSize: 13, color: 'var(--dark-muted)' };
@@ -15,6 +19,9 @@ const sectionHead = { display: 'flex', justifyContent: 'space-between', alignIte
 const smallLink = { fontSize: 13, fontWeight: 600, minHeight: 44, display: 'inline-flex', alignItems: 'center' } as const;
 
 export default function Panel() {
+  const lotes = useLotes();
+  const totalHa = lotes.reduce((sum, l) => sum + l.ha, 0);
+  const kpisVivos = kpis.map((k) => k.label === 'Superficie mapeada' ? { ...k, value: `${fmtHa(totalHa)} ha`, sub: plural(lotes.length, 'lote', 'lotes') } : k);
   return (
     <div className="page">
       <header className="page-header">
@@ -25,12 +32,12 @@ export default function Panel() {
         <div className="row" style={{ gap: 10, alignItems: 'center' }}>
           <Badge tone="warn">Datos de demostración</Badge>
           <HashTodo variant="secondary" />
-          <Link to="/mapa" className="btn btn-primary">+ Nuevo lote</Link>
+          <Link to="/mapa?dibujar=1" className="btn btn-primary">+ Nuevo lote</Link>
         </div>
       </header>
 
       <section aria-label="Resumen" className="grid-auto" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        {kpis.map((k) => (
+        {kpisVivos.map((k) => (
           <div key={k.label} className="card stack" style={{ gap: 6, padding: '18px 20px' }}>
             <span className="muted" style={{ fontSize: 13 }}>{k.label}</span>
             <span className="display" style={{ fontSize: 30 }}>{k.value}</span>
@@ -44,13 +51,13 @@ export default function Panel() {
           <span id="obj" style={sub}>Certificación objetivo</span>
           <strong className="display" style={big}>RTRS · soja responsable</strong>
           <span style={subLight}>
-            {count('ok')} de {rtrs.items.length} requisitos cumplidos en el Lote 3 · {count('bad')} brechas de biodiversidad · {count('warn')} dato faltante
+            {count('ok')} de {rtrs.items.length} {count('ok') === 1 ? 'requisito cumplido' : 'requisitos cumplidos'} en el Lote 3 · {plural(count('bad'), 'mejora necesaria', 'mejoras necesarias')} de biodiversidad · {plural(count('warn'), 'dato faltante', 'datos faltantes')}
           </span>
         </div>
         <div className="stack" style={{ gap: 6, flex: '1 1 240px' }}>
-          <span style={sub}>Plan de corredores sugerido</span>
-          <strong className="display" style={big}>{corredoresHa} ha</strong>
-          <span style={subLight}>biodiversidad {bio.actual} → {bio.proyectado} · rinde {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
+          <span style={sub}>Plan de corredores</span>
+          <strong className="display" style={big}>{corredoresHa} ha · {corredores.length} corredores</strong>
+          <span style={subLight}>{corredoresImplantadasHa} ha ya implantada · biodiversidad {bio.actual} → {bio.proyectado} · rinde {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
         </div>
         <Link to="/lote/l3" className="btn btn-accent" style={{ minHeight: 48, fontSize: 15 }}>Ver mejoras necesarias</Link>
       </section>
@@ -100,8 +107,8 @@ export default function Panel() {
                   <tr key={l.id}>
                     <td><Link to={`/lote/${l.id}`} style={{ fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', minHeight: 44 }}>{l.name}</Link></td>
                     <td>{l.crop}</td>
-                    <td>{l.ha} ha</td>
-                    <td className="mono">{l.bio}/100</td>
+                    <td>{l.ha.toLocaleString('es-AR')} ha</td>
+                    <td className="mono">{l.status === 'Sin analizar' ? '—' : `${l.bio}/100`}</td>
                     <td><Badge tone={l.tone}>{l.status}</Badge></td>
                   </tr>
                 ))}

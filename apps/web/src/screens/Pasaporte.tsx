@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Badge, FakeQR, Logo, sha256, type Tone } from '@synta/ui';
-import { biodiversidadLote3, corredores, establecimiento, lotes } from '@synta/data';
+import { Badge, FakeQR, Logo, sha256 } from '@synta/ui';
+import { biodiversidadLote3, corredores, ejes, establecimiento } from '@synta/data';
+import { useLotes } from '../store/lotes';
 import HashTodo from '../components/HashTodo';
 import './pasaporte/pasaporte.css';
 
@@ -8,22 +9,7 @@ const URL_VERIFICACION = 'https://syntra.app/v/184';
 const NUMERO = 'SYN-2026-000184';
 const EMITIDO = '12/11/2026';
 
-const facts = [
-  { l: 'Superficie', v: `${establecimiento.totalHa} ha` },
-  { l: 'Lotes', v: String(lotes.length) },
-  { l: 'Deforestación post 2020', v: '0 ha' },
-  { l: 'Biodiversidad', v: `${establecimiento.biodiversity}/100` },
-];
-
-const ejes: { eje: string; normas: string; res: string; tone: Tone; obs: string }[] = [
-  { eje: 'Provincial (Córdoba)', normas: 'Ley Agroforestal de Córdoba; Buenas Prácticas Agropecuarias (BPA)', res: 'Cumple', tone: 'ok', obs: 'Cobertura forestal mínima en curso con corredores (L3); falta registro de aplicaciones' },
-  { eje: 'Nacional', normas: 'OTBN (Ley 26.331); RENSPA', res: 'Cumple', tone: 'ok', obs: '—' },
-  { eje: 'Internacional', normas: 'EUDR: geolocalización, no deforestación, legalidad', res: 'Parcial', tone: 'warn', obs: 'Legalidad pendiente en L4' },
-  { eje: 'Certificaciones', normas: 'RTRS (objetivo); ISCC', res: 'Con brechas', tone: 'bad', obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' },
-];
-
-const hashes = [
-  { k: 'Polígonos (4 lotes)', v: '0x44c0a8…e29f12' },
+const hashesBase = [
   { k: 'Cobertura 2020→2026', v: '0x5a07c1…b0e3d1' },
   { k: 'Biodiversidad', v: '0x91bd5e…f204aa' },
 ];
@@ -31,12 +17,21 @@ const hashes = [
 const fmtHa = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 1 });
 
 export default function Pasaporte() {
+  const lotes = useLotes();
+  const totalHa = lotes.reduce((sum, l) => sum + l.ha, 0);
+  const facts = [
+    { l: 'Superficie', v: `${totalHa.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha` },
+    { l: 'Lotes', v: String(lotes.length) },
+    { l: 'Deforestación post 2020', v: '0 ha' },
+    { l: 'Biodiversidad', v: `${establecimiento.biodiversity}/100` },
+  ];
+  const hashes = [{ k: `Polígonos (${lotes.length} ${lotes.length === 1 ? 'lote' : 'lotes'})`, v: '0x44c0a8…e29f12' }, ...hashesBase];
   const [hash, setHash] = useState<string | null>(null);
   const [copiado, setCopiado] = useState('');
 
   useEffect(() => {
     sha256(JSON.stringify({ numero: NUMERO, emitido: EMITIDO, establecimiento, lotes, ejes, corredores })).then(setHash);
-  }, []);
+  }, [lotes]);
 
   async function compartir() {
     try {
@@ -74,7 +69,7 @@ export default function Pasaporte() {
         </header>
 
         <section style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24 }}>
-          <svg viewBox="0 0 400 260" role="img" aria-label="Mapa de los 4 lotes del establecimiento con los corredores" style={{ flex: '1 1 300px', minWidth: 0, height: 'auto', borderRadius: 8 }}>
+          <svg viewBox="0 0 400 260" role="img" aria-label="Esquema de los lotes del establecimiento con los corredores" style={{ flex: '1 1 300px', minWidth: 0, height: 'auto', borderRadius: 8 }}>
             <rect width="400" height="260" fill="#E9EDE4" />
             <polygon points="40,30 150,22 156,110 50,118" fill="#CFE3D5" stroke="#1D6A47" strokeWidth="2" />
             <polygon points="168,26 258,32 255,110 165,112" fill="#CFE3D5" stroke="#1D6A47" strokeWidth="2" />
@@ -103,10 +98,10 @@ export default function Pasaporte() {
               <thead><tr><th scope="col">Eje</th><th scope="col">Normas evaluadas</th><th scope="col">Resultado</th><th scope="col">Observaciones</th></tr></thead>
               <tbody>
                 {ejes.map((e) => (
-                  <tr key={e.eje}>
-                    <th scope="row" style={{ fontSize: 14, color: 'var(--ink)', borderBottomColor: 'var(--line-soft)' }}>{e.eje}</th>
+                  <tr key={e.name}>
+                    <th scope="row" style={{ fontSize: 14, color: 'var(--ink)', borderBottomColor: 'var(--line-soft)' }}>{e.name}</th>
                     <td>{e.normas}</td>
-                    <td><Badge tone={e.tone}>{e.res}</Badge></td>
+                    <td><Badge tone={e.tone}>{e.status}</Badge></td>
                     <td className="muted">{e.obs}</td>
                   </tr>
                 ))}
@@ -116,7 +111,7 @@ export default function Pasaporte() {
         </section>
 
         <section>
-          <h2 className="section-title">Certificación objetivo: RTRS — plan para cerrar brechas</h2>
+          <h2 className="section-title">Certificación objetivo: RTRS — plan de mejoras necesarias</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             {corredores.map((c) => (
               <div key={c.id} className="pasaporte-box">

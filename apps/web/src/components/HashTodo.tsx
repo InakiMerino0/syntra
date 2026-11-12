@@ -1,33 +1,38 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { sha256, shortHash } from '@synta/ui';
 import * as data from '@synta/data';
+import { useLotes } from '../store/lotes';
 import './hashtodo.css';
 
-// Every dataset @synta/data exposes today. Read defensively: a missing export is skipped, not a crash.
-const DATASETS: { key: string; label: string }[] = [
-  { key: 'establecimiento', label: 'Establecimiento' },
-  { key: 'lotes', label: 'Lotes (polígonos)' },
-  { key: 'capas', label: 'Capas (bosque nativo, focos)' },
-  { key: 'kpis', label: 'Indicadores' },
-  { key: 'ejes', label: 'Ejes regulatorios' },
-  { key: 'certificaciones', label: 'Certificaciones y requisitos' },
-  { key: 'corredores', label: 'Corredores biológicos' },
-  { key: 'biodiversidadLote3', label: 'Biodiversidad Lote 3' },
-  { key: 'ndviSerie', label: 'Serie NDVI' },
-  { key: 'eventos', label: 'Registros firmados' },
-  { key: 'tiposAccion', label: 'Tipos de acción' },
+// The evidence a certifier cares about, grouped in the producer's words. Each group bundles one or more
+// @synta/data exports (read defensively: a missing export is skipped, not a crash).
+const GRUPOS: { label: string; desc: string; keys: string[] }[] = [
+  { label: 'Datos del establecimiento', desc: 'Nombre, RENSPA, ubicación y ecorregión', keys: ['establecimiento', 'ecorregion'] },
+  { label: 'Lotes y sus polígonos', desc: 'Límites georreferenciados y superficie de cada lote', keys: ['lotes'] },
+  { label: 'Análisis satelital', desc: 'NDVI, cambio de cobertura, bosque nativo y focos de calor', keys: ['capas', 'ndviSerie', 'kpis'] },
+  { label: 'Cumplimiento por certificación', desc: 'Estado de cada requisito y de cada eje regulatorio', keys: ['certificaciones', 'ejes'] },
+  { label: 'Índice de biodiversidad', desc: 'Puntaje actual, proyectado y su desglose', keys: ['biodiversidadLote3'] },
+  { label: 'Corredores biológicos', desc: 'Diseño, superficie y seguimiento en el tiempo', keys: ['corredores', 'seguimientoCorredores'] },
+  { label: 'Monitoreos de campo', desc: 'Conteos de polinizadores y enemigos naturales', keys: ['monitoreos'] },
+  { label: 'Registros de campo firmados', desc: 'Siembras, aplicaciones, implantaciones, análisis y cosechas', keys: ['eventos'] },
 ];
 
 const source = data as unknown as Record<string, unknown>;
-const items = DATASETS.filter((d) => source[d.key] !== undefined).map((d) => ({ ...d, data: source[d.key] }));
+const items = GRUPOS
+  .map((g) => {
+    const present = g.keys.filter((k) => source[k] !== undefined);
+    const payload = Object.fromEntries(present.map((k) => [k, source[k]]));
+    const count = present.reduce((n, k) => n + (Array.isArray(source[k]) ? (source[k] as unknown[]).length : 1), 0);
+    return { label: g.label, desc: g.desc, data: payload, count, present: present.length };
+  })
+  .filter((g) => g.present > 0);
 
-interface Row { label: string; hash: string; bytes: number; count: number | null }
+interface Row { label: string; desc: string; hash: string; bytes: number; count: number }
 interface Anchor { tx: string; bloque: string; generado: string }
 
 const enc = new TextEncoder();
 const fmt = (n: number) => n.toLocaleString('es-AR');
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const countOf = (v: unknown) => (Array.isArray(v) ? v.length : v && typeof v === 'object' ? Object.keys(v).length : null);
 
 /** Merkle root: pairwise sha256 of concatenated child hashes; the last one is duplicated when odd. */
 async function merkleRoot(hashes: string[]): Promise<string> {
@@ -51,16 +56,18 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
   const [root, setRoot] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [msg, setMsg] = useState('');
+  const [started, setStarted] = useState(false);
+  const lotesActuales = useLotes(); // includes lots drawn on the map
 
   async function run() {
     const id = ++runRef.current;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const step = reduce ? 0 : 150;
-    setRows([]); setRoot(null); setAnchor(null); setMsg('');
+    setStarted(true); setRows([]); setRoot(null); setAnchor(null); setMsg('');
     const out: Row[] = [];
     for (const d of items) {
-      const json = JSON.stringify(d.data);
-      const row = { label: d.label, hash: await sha256(json), bytes: enc.encode(json).length, count: countOf(d.data) };
+      const json = JSON.stringify('lotes' in d.data ? { ...d.data, lotes: lotesActuales } : d.data);
+      const row = { label: d.label, desc: d.desc, hash: await sha256(json), bytes: enc.encode(json).length, count: 'lotes' in d.data ? lotesActuales.length : d.count };
       if (step) await wait(step);
       if (runRef.current !== id) return;
       out.push(row);
@@ -80,8 +87,9 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
   }
 
   function open() {
+    runRef.current++;
+    setStarted(false); setRows([]); setRoot(null); setAnchor(null); setMsg('');
     dialogRef.current?.showModal();
-    run();
   }
 
   function close() {
@@ -120,7 +128,7 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
     const url = URL.createObjectURL(new Blob([JSON.stringify(evidencia, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `synta-evidencia-${root.slice(2, 10)}.json`;
+    a.download = `syntra-evidencia-${root.slice(2, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -133,7 +141,7 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
   return (
     <>
       <button ref={triggerRef} type="button" className={`btn btn-${variant}`} onClick={open} aria-haspopup="dialog">
-        Hashear toda la información
+        Sellar evidencia del campo
       </button>
 
       <dialog
@@ -145,34 +153,55 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
         <div className="hashtodo-body">
           <header className="hashtodo-head">
             <div className="stack" style={{ gap: 4, minWidth: 0 }}>
-              <h2 id={titleId} className="section-title" style={{ fontSize: 20 }}>Huella de toda la información</h2>
+              <h2 id={titleId} className="section-title" style={{ fontSize: 20 }}>Sellar la evidencia del campo</h2>
               <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>
-                SHA-256 real de cada conjunto de datos del establecimiento, combinados en una sola huella raíz (árbol de Merkle).
+                Generamos una huella digital única de toda la evidencia de tu establecimiento. Sirve para demostrarle al certificador o al comprador que nada se modificó desde hoy.
               </span>
             </div>
             <button type="button" className="btn btn-secondary hashtodo-x" onClick={close} aria-label="Cerrar">✕</button>
           </header>
 
+          {!started ? (
+            <>
+              <strong style={{ fontSize: 14 }}>Qué se va a sellar ({items.length} conjuntos)</strong>
+              <ul className="hashtodo-list">
+                {items.map((g) => (
+                  <li key={g.label}>
+                    <div className="stack" style={{ gap: 2, minWidth: 0 }}>
+                      <strong style={{ fontSize: 14 }}>{g.label}</strong>
+                      <span className="muted" style={{ fontSize: 12 }}>{g.desc}</span>
+                    </div>
+                    <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{(n => `${fmt(n)} ${n === 1 ? 'registro' : 'registros'}`)('lotes' in g.data ? lotesActuales.length : g.count)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="hashtodo-actions">
+                <button type="button" className="btn btn-secondary" onClick={close}>Cancelar</button>
+                <button type="button" className="btn btn-primary" onClick={run}>Generar huella</button>
+              </div>
+            </>
+          ) : (
+          <>
           <ol className="hashtodo-list" aria-live="polite" aria-busy={!done}>
             {rows.map((r) => (
               <li key={r.label}>
                 <div className="stack" style={{ gap: 2, minWidth: 0 }}>
                   <strong style={{ fontSize: 14 }}>{r.label}</strong>
                   <span className="muted" style={{ fontSize: 12 }}>
-                    {r.count !== null ? `${fmt(r.count)} ${r.count === 1 ? 'ítem' : 'ítems'} · ` : ''}{fmt(r.bytes)} bytes
+                    {fmt(r.count)} {r.count === 1 ? 'registro' : 'registros'} · {fmt(r.bytes)} bytes
                   </span>
                 </div>
-                <span className="mono hashtodo-hash" title={r.hash}>{shortHash(r.hash)}</span>
+                <span className="mono hashtodo-hash" title={r.hash}>✓ {shortHash(r.hash)}</span>
               </li>
             ))}
-            {!done && <li className="muted" style={{ fontSize: 13 }}>Calculando {rows.length + 1} de {items.length}…</li>}
+            {!done && <li className="muted" style={{ fontSize: 13 }}>Sellando {rows.length + 1} de {items.length}…</li>}
           </ol>
 
           <section className="card-dark stack" style={{ gap: 8 }} aria-live="polite">
-            <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>Huella raíz del establecimiento</span>
+            <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>Huella única del establecimiento (combina las {items.length} anteriores)</span>
             <strong className="mono hashtodo-root">{root ?? 'calculando…'}</strong>
             <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>
-              {!root ? `${rows.length} de ${items.length} conjuntos hasheados`
+              {!root ? `${rows.length} de ${items.length} conjuntos sellados`
                 : !anchor ? 'Anclando en Polygon Amoy (simulado)…'
                 : <>Anclado en Polygon Amoy (simulado) · tx <span className="mono" style={{ color: 'var(--dark-ink)' }}>{shortHash(anchor.tx)}</span> · bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{anchor.bloque}</span> · {new Date(anchor.generado).toLocaleString('es-AR')}</>}
             </span>
@@ -187,6 +216,8 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
             <button type="button" className="btn btn-secondary" onClick={copiar} disabled={!root}>Copiar huella raíz</button>
             <button type="button" className="btn btn-primary" onClick={descargar} disabled={!anchor}>Descargar evidencia (.json)</button>
           </div>
+          </>
+          )}
         </div>
       </dialog>
     </>

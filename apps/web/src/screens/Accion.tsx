@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { sha256, shortHash } from '@synta/ui';
-import { establecimiento, lotes, tiposAccion } from '@synta/data';
+import { establecimiento, tiposAccion } from '@synta/data';
+import { useLotes } from '../store/lotes';
 
 const srOnly = { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' } as const;
 
 export default function Accion() {
   const navigate = useNavigate();
+  const lotes = useLotes();
   const [params] = useSearchParams();
   const inicial = tiposAccion.find((t) => t.id === params.get('tipo')) ?? tiposAccion[0];
   const [tipoId, setTipoId] = useState(inicial.id);
@@ -19,10 +21,11 @@ export default function Accion() {
   const [archivo, setArchivo] = useState('');
   const [fileFocus, setFileFocus] = useState(false);
   const [hash, setHash] = useState('');
+  const [firmado, setFirmado] = useState('');
   const [estado, setEstado] = useState<'idle' | 'firmando' | 'ok'>('idle');
 
   const tipo = tiposAccion.find((t) => t.id === tipoId)!;
-  const lote = lotes.find((l) => l.id === loteId)!;
+  const lote = lotes.find((l) => l.id === loteId) ?? lotes[0];
 
   const payload = JSON.stringify({
     tipo: tipo.label,
@@ -49,12 +52,17 @@ export default function Accion() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!hash) return;
+    const signed = hash; // freeze the hash of what was submitted
     setEstado('firmando');
-    setTimeout(() => setEstado('ok'), 800);
+    setTimeout(() => { setFirmado(signed); setEstado('ok'); }, 800);
   };
 
+  // Editing anything after signing invalidates the banner: it is a new, unsigned record.
+  useEffect(() => { setEstado((s) => (s === 'ok' ? 'idle' : s)); }, [payload]);
+
   // Simulated block number, derived from the hash so it's stable per payload.
-  const bloque = hash ? 48_000_000 + (parseInt(hash.slice(2, 8), 16) % 1_000_000) : 0;
+  const bloque = firmado ? 48_000_000 + (parseInt(firmado.slice(2, 8), 16) % 1_000_000) : 0;
 
   return (
     <div className="page" style={{ maxWidth: 1200 }}>
@@ -78,7 +86,7 @@ export default function Accion() {
             <div className="field">
               <label htmlFor="lote">Lote</label>
               <select id="lote" className="input" value={loteId} onChange={(e) => setLoteId(e.target.value)}>
-                {lotes.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.ha} ha)</option>)}
+                {lotes.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.ha.toLocaleString('es-AR')} ha)</option>)}
               </select>
             </div>
             <div className="field">
@@ -123,7 +131,7 @@ export default function Accion() {
 
           {estado === 'ok' ? (
             <div role="status" style={{ background: 'var(--ok-bg)', color: 'var(--ok-fg)', borderRadius: 8, padding: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600 }}>Registro firmado · hash <span className="mono">{shortHash(hash)}</span> · bloque #{bloque.toLocaleString('es-AR')} (simulado)</span>
+              <span style={{ fontWeight: 600 }}>Registro firmado · hash <span className="mono">{shortHash(firmado)}</span> · bloque #{bloque.toLocaleString('es-AR')} (simulado)</span>
               <Link to="/trazabilidad" className="btn btn-primary">Ver en trazabilidad</Link>
             </div>
           ) : (

@@ -28,6 +28,8 @@ export interface AccionPlan {
   porQue: string;
   /** Where to act in the app (defaults to /accion). */
   link: string;
+  /** Label for the secondary link when `link` is not /accion (defaults by route). */
+  linkLabel?: string;
 }
 
 export interface ResumenPlan {
@@ -109,7 +111,7 @@ export function generarPlan(certId: string): Plan {
 
     // R1 — biodiversity / native vegetation gap → corridors that connect the lot with the native forest.
     if (req.status === 'bad' && /vegetación nativa|biodiversidad|cobertura forestal/i.test(rule) && !/plan de manejo/i.test(rule)) {
-      regla('R1', 'Brecha de vegetación nativa / biodiversidad + lote lindero a monte nativo', 'corredores biológicos que conecten el lote con el monte');
+      regla('R1', 'Mejora necesaria en vegetación nativa / biodiversidad + lote lindero a monte nativo', 'corredores biológicos que conecten el lote con el monte');
       const lista = corredoresDe(req);
       for (const [i, c] of lista.entries()) {
         corredoresPlan.set(c.id, c);
@@ -126,8 +128,8 @@ export function generarPlan(certId: string): Plan {
           impacto: `+${c.impact} biodiversidad`,
           tipo: 'corredor',
           porQue: enBajo
-            ? `Brecha "${rule}" (evidencia: ${req.evidence}). La zona tiene NDVI bajo (mín. ${fmt(ndviMin, 2)}): se resigna poco rinde y suma heterogeneidad.`
-            : `Brecha "${rule}" (evidencia: ${req.evidence}) + ${short(lote3)} linda con monte nativo al este → el corredor conecta el lote con el monte.`,
+            ? `Mejora necesaria "${rule}" (evidencia: ${req.evidence}). La zona tiene NDVI bajo (mín. ${fmt(ndviMin, 2)}): se resigna poco rinde y suma heterogeneidad.`
+            : `Mejora necesaria "${rule}" (evidencia: ${req.evidence}) + ${short(lote3)} linda con monte nativo al este → el corredor conecta el lote con el monte.`,
         });
       }
       continue;
@@ -140,8 +142,8 @@ export function generarPlan(certId: string): Plan {
         titulo: 'Revisar y aprobar el plan de manejo de biodiversidad',
         detalle: `Borrador generado con el diagnóstico (${biodiversidadLote3.actual}/100) y los corredores elegidos. Lo firmás y queda anclado.`,
         lote: short(lote3), requisito: rule, prioridad: 'alta', plazo: 'Esta semana',
-        esfuerzo: '30 min de lectura', impacto: 'cierra brecha', link: `/lote/${lote3.id}`,
-        porQue: `Requisito en "Brecha" (${req.evidence}). El algoritmo ya tiene los datos para redactarlo: solo falta tu aprobación.`,
+        esfuerzo: '30 min de lectura', impacto: 'completa el requisito', link: `/lote/${lote3.id}`, linkLabel: 'Ver diagnóstico del lote →',
+        porQue: `Requisito en "Mejora necesaria" (${req.evidence}). El algoritmo ya tiene los datos para redactarlo: solo falta tu aprobación.`,
       });
       continue;
     }
@@ -231,7 +233,7 @@ export function generarPlan(certId: string): Plan {
       detalle: req.fix ? `Para cerrarlo: ${req.fix}` : 'Cargar la evidencia del requisito.',
       lote: 'Todos', requisito: rule, prioridad: req.status === 'bad' ? 'alta' : 'media', plazo: 'Este mes',
       esfuerzo: 'a definir', impacto: 'completa dato',
-      porQue: `Requisito en estado "${req.status === 'bad' ? 'Brecha' : 'Falta dato'}" (${req.evidence}).`,
+      porQue: `Requisito en estado "${req.status === 'bad' ? 'Mejora necesaria' : 'Falta dato'}" (${req.evidence}).`,
     });
   }
 
@@ -289,7 +291,7 @@ export function generarPlan(certId: string): Plan {
   const prodRegs = eventos.filter((e) => e.kind === 'prod');
   const datos: DatoPlan[] = [
     { label: 'Certificación objetivo', valor: `${cert.label} · ${cert.items.length} requisitos`, fuente: 'Catálogo Syntra (ilustrativo)' },
-    { label: 'Estado de los requisitos', valor: `${ok} cumplen · ${bad} brechas · ${warn} faltan dato`, fuente: 'Diagnóstico de hoy 14:32' },
+    { label: 'Estado de los requisitos', valor: `${ok} ${ok === 1 ? 'cumple' : 'cumplen'} · ${bad} ${bad === 1 ? 'mejora necesaria' : 'mejoras necesarias'} · ${warn} ${warn === 1 ? 'dato faltante' : 'datos faltantes'}`, fuente: 'Diagnóstico de hoy 14:32' },
     { label: 'Lotes en alcance', valor: `${alcance.map(short).join(', ')} (${alcance.reduce((s, l) => s + l.ha, 0)} ha)`, fuente: cert.id === 'rtrs' ? 'Solo lotes de soja' : 'Polígonos firmados' },
     { label: 'Lotes sin analizar', valor: sinAnalizar.length ? sinAnalizar.map((l) => `${short(l)} (${l.ha} ha)`).join(', ') : 'Ninguno', fuente: 'Mapa y lotes' },
     { label: 'Lotes linderos a monte nativo', valor: linderos.map(short).join(', ') || 'Ninguno', fuente: `Capa de bosque nativo (${capas.bosqueNativo.length} vértices)` },

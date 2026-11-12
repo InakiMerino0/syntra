@@ -3,15 +3,46 @@ import { Link, useParams } from 'react-router-dom';
 import { MapContainer, Polygon, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Badge, ProgressBar } from '@synta/ui';
-import { biodiversidadLote3 as bio, capas, certificaciones, corredores, ecorregion, eventos, lotes, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
-import type { Lote as LoteT } from '@synta/data';
+import { biodiversidadLote3 as bio, capas, certificaciones, corredores, ecorregion, eventos, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
+import type { Lote as LoteT, Certificacion as CertT } from '@synta/data';
+import { useLote, LOTE_CON_DIAGNOSTICO } from '../store/lotes';
 
 const TABS = [['cum', 'Certificación'], ['bio', 'Biodiversidad y corredores'], ['seg', 'Seguimiento'], ['sat', 'Diagnóstico satelital'], ['traz', 'Trazabilidad']] as const;
 type Tab = (typeof TABS)[number][0];
 
+type Kind = 'full' | 'cert' | 'none';
+const kindOf = (l: LoteT): Kind => (l.id === LOTE_CON_DIAGNOSTICO ? 'full' : l.status === 'Certificado' ? 'cert' : l.status === 'Sin analizar' ? 'none' : 'full');
+
 export default function Lote() {
   const { loteId } = useParams();
-  const lote = lotes.find((l) => l.id === loteId) ?? lotes.find((l) => l.id === 'l3')!;
+  const lote = useLote(loteId);
+  if (!lote) {
+    return (
+      <div className="page">
+        <div className="card stack" style={{ maxWidth: 480, gap: 12 }}>
+          <strong style={{ fontSize: 16 }}>Lote no encontrado</strong>
+          <span className="muted" style={{ fontSize: 14 }}>Ese lote no existe o fue borrado.</span>
+          <Link to="/mapa" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Volver al mapa</Link>
+        </div>
+      </div>
+    );
+  }
+  return <LoteDetalle lote={lote} />;
+}
+
+function SinDiagnostico({ id }: { id: string }) {
+  return (
+    <div className="card stack" style={{ gap: 12, alignItems: 'flex-start' }}>
+      <strong style={{ fontSize: 16 }}>Este lote todavía no tiene diagnóstico</strong>
+      <span className="muted" style={{ fontSize: 14, lineHeight: 1.45 }}>Analizalo para ver el avance hacia cada certificación y las mejoras necesarias.</span>
+      <Link to={`/procesando/${id}`} className="btn btn-primary">Analizar y certificar</Link>
+    </div>
+  );
+}
+
+function LoteDetalle({ lote }: { lote: LoteT }) {
+  const kind = kindOf(lote);
+  const demo = kind === 'full' && lote.id !== LOTE_CON_DIAGNOSTICO;
   const [tab, setTab] = useState<Tab>('cum');
   const lat = lote.polygon.reduce((s, p) => s + p[0], 0) / lote.polygon.length;
   const lng = lote.polygon.reduce((s, p) => s + p[1], 0) / lote.polygon.length;
@@ -23,7 +54,8 @@ export default function Lote() {
       <header className="page-header">
         <div className="stack" style={{ gap: 6 }}>
           <h1 className="page-title">{lote.name}</h1>
-          <span className="muted" style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{lote.ha} ha · {lote.crop} 2026/27 · Centroide {fmt(lat)}, {fmt(lng)} · Diagnóstico de hoy 14:32</span>
+          <span className="muted" style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{lote.ha.toLocaleString('es-AR')} ha · {lote.crop} 2026/27 · Centroide {fmt(lat)}, {fmt(lng)}{kind === 'full' && !demo ? ' · Diagnóstico de hoy 14:32' : ''}</span>
+          {demo && <span className="muted" style={{ fontSize: 13 }}>Diagnóstico de demostración</span>}
         </div>
         <div className="row" style={{ gap: 10 }}>
           <Link to={`/procesando/${lote.id}`} className="btn btn-secondary">Re-analizar</Link>
@@ -38,9 +70,9 @@ export default function Lote() {
       </div>
 
       <section role="tabpanel" id="lote-panel" aria-labelledby={`tab-${tab}`}>
-        {tab === 'cum' && <Certificacion onBio={() => setTab('bio')} />}
-        {tab === 'bio' && <Biodiversidad lote={lote} />}
-        {tab === 'seg' && <Seguimiento />}
+        {tab === 'cum' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Certificacion kind={kind} onBio={() => setTab('bio')} />)}
+        {tab === 'bio' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Biodiversidad lote={lote} kind={kind} />)}
+        {tab === 'seg' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Seguimiento kind={kind} />)}
         {tab === 'sat' && <Satelital />}
         {tab === 'traz' && <Trazabilidad short={lote.name.split(' — ')[0]} />}
       </section>
@@ -48,11 +80,17 @@ export default function Lote() {
   );
 }
 
-function Certificacion({ onBio }: { onBio: () => void }) {
+function Certificacion({ kind, onBio }: { kind: Kind; onBio: () => void }) {
   const [certId, setCertId] = useState('rtrs');
-  const cert = certificaciones.find((c) => c.id === certId)!;
+  const base = certificaciones.find((c) => c.id === certId)!;
+  const evid = ['polígono firmado', 'cambio de cobertura 2020–2026: 0 ha', 'registros firmados en la trazabilidad'];
+  const cert: CertT = kind === 'cert'
+    ? { ...base, items: base.items.map((it, i) => ({ rule: it.rule, evidence: evid[i % evid.length], status: 'ok' as const })) }
+    : base;
   const ok = cert.items.filter((i) => i.status === 'ok').length;
   const total = cert.items.length;
+  const malas = cert.items.filter((i) => i.status === 'bad').length;
+  const faltan = cert.items.filter((i) => i.status === 'warn').length;
   return (
     <div className="stack" style={{ gap: 16 }}>
       <div className="card stack">
@@ -68,9 +106,9 @@ function Certificacion({ onBio }: { onBio: () => void }) {
         <div className="card-dark stack" style={{ flex: '1 1 240px' }}>
           <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>Avance hacia {cert.label}</span>
           <span className="display" style={{ fontSize: 48, lineHeight: 1 }}>{ok}/{total}</span>
-          <span style={{ fontSize: 14, color: '#c3d2c8' }}>requisitos cumplidos · {total - ok} brechas</span>
+          <span style={{ fontSize: 14, color: '#c3d2c8' }}>requisitos cumplidos · {malas} {malas === 1 ? 'mejora necesaria' : 'mejoras necesarias'}{faltan > 0 && ` · ${faltan} ${faltan === 1 ? 'dato faltante' : 'datos faltantes'}`}</span>
           <ProgressBar value={Math.round((ok / total) * 100)} label={`Avance hacia ${cert.label}`} />
-          {cert.items.some((i) => i.status === 'bad') && (
+          {malas > 0 && (
             <button type="button" className="btn btn-accent" style={{ marginTop: 8 }} onClick={onBio}>Ver corredores recomendados</button>
           )}
         </div>
@@ -93,17 +131,35 @@ function Certificacion({ onBio }: { onBio: () => void }) {
 
 const swatch = (bg: string) => <span aria-hidden="true" style={{ width: 18, height: 8, background: bg, display: 'inline-block' }} />;
 
-// shortcut: corridor/biodiversity data only exists for Lote 3; every lot shows it (prototype).
-function Biodiversidad({ lote }: { lote: LoteT }) {
+// Corridor/biodiversity data only exists for Lote 3; analyzed drawn lots reuse it as a demo template.
+function Biodiversidad({ lote, kind }: { lote: LoteT; kind: Kind }) {
+  const conLineas = lote.id === LOTE_CON_DIAGNOSTICO;
+  if (kind === 'cert') {
+    return (
+      <div className="stack" style={{ gap: 16 }}>
+        <div className="card stack" style={{ gap: 14 }}>
+          <div className="row" style={{ alignItems: 'baseline', gap: 12 }}>
+            <span className="display" style={{ fontSize: 'clamp(36px, 10vw, 48px)', lineHeight: 1, color: 'var(--primary)' }}>{lote.bio}</span>
+            <span className="muted" style={{ fontSize: 13 }}>índice de biodiversidad del lote</span>
+          </div>
+          <ProgressBar value={lote.bio} label={`Índice de biodiversidad de ${lote.name}: ${lote.bio}`} />
+        </div>
+        <div style={{ background: 'var(--primary-soft)', color: 'var(--primary-ink)', borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <strong style={{ fontSize: 15 }}>No requiere corredores adicionales</strong>
+          <span style={{ fontSize: 13, lineHeight: 1.45 }}>Seguí con el monitoreo de campo.</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="row" style={{ alignItems: 'flex-start' }}>
       <figure className="card" style={{ flex: '3 1 480px', minWidth: 0, margin: 0, padding: 0, overflow: 'hidden' }}>
-        <div role="img" aria-label={`${lote.name} con ${corredores.length} corredores biológicos sugeridos que lo conectan con el monte nativo al este`}>
-          <MapContainer bounds={[...lote.polygon, ...capas.bosqueNativo]} scrollWheelZoom={false} className="lote-map">
+        <div role="img" aria-label={conLineas ? `${lote.name} con ${corredores.length} corredores biológicos sugeridos que lo conectan con el monte nativo al este` : `${lote.name}; los corredores sugeridos están en el informe`}>
+          <MapContainer key={lote.id} bounds={conLineas ? [...lote.polygon, ...capas.bosqueNativo] : lote.polygon} scrollWheelZoom={false} className="lote-map">
             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Tiles © Esri" />
-            <Polygon positions={capas.bosqueNativo} pathOptions={{ color: '#2e4a26', fillColor: '#2e4a26', fillOpacity: 0.7 }} />
+            {conLineas && <Polygon positions={capas.bosqueNativo} pathOptions={{ color: '#2e4a26', fillColor: '#2e4a26', fillOpacity: 0.7 }} />}
             <Polygon positions={lote.polygon} pathOptions={{ color: '#fff', weight: 2, fillOpacity: 0.05 }} />
-            {corredores.map((c) => (
+            {conLineas && corredores.map((c) => (
               <Polyline key={c.id} positions={c.line} pathOptions={{ color: '#FFD166', weight: 10, opacity: 0.9 }}>
                 <Tooltip permanent direction="center">{c.id}</Tooltip>
               </Polyline>
@@ -111,9 +167,15 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
           </MapContainer>
         </div>
         <figcaption className="row" style={{ padding: '12px 16px', fontSize: 13, alignItems: 'center' }}>
-          <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('var(--corridor)')}Corredor sugerido</span>
-          <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('#2e4a26')}Monte nativo existente</span>
-          <span className="muted">Total 4,2 ha · 4,9% del lote</span>
+          {conLineas ? (
+            <>
+              <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('var(--corridor)')}Corredor sugerido</span>
+              <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('#2e4a26')}Monte nativo existente</span>
+              <span className="muted">Total 4,2 ha · 4,9% del lote</span>
+            </>
+          ) : (
+            <span className="muted">Corredores sugeridos en el informe</span>
+          )}
         </figcaption>
       </figure>
       <div className="stack" style={{ flex: '2 1 320px', minWidth: 0, gap: 16 }}>
@@ -200,7 +262,7 @@ function MonitoreoCampo() {
   );
 }
 
-function Seguimiento() {
+function Seguimiento({ kind }: { kind: Kind }) {
   const ref = seguimientoCorredores.find((s) => s.id === 'ref')!;
   const a = seguimientoCorredores.find((s) => s.id === 'A')!;
   const s = ref.serie;
@@ -240,7 +302,7 @@ function Seguimiento() {
           </svg>
         </figure>
       </section>
-      <section className="card stack" style={{ gap: 12 }} aria-labelledby="a-t">
+      {kind === 'full' && <section className="card stack" style={{ gap: 12 }} aria-labelledby="a-t">
         <div className="row" style={{ justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
           <strong id="a-t" style={{ fontSize: 16 }}>{a.titulo}</strong>
           <Badge tone="warn">Recién implantado</Badge>
@@ -256,7 +318,7 @@ function Seguimiento() {
         </ol>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>Lo vamos a seguir de la misma forma que el corredor de referencia, para demostrar que perdura.</p>
         <Link to="/accion?tipo=monitoreo" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Registrar monitoreo</Link>
-      </section>
+      </section>}
     </div>
   );
 }

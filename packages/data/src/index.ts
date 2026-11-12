@@ -66,7 +66,7 @@ export interface Lote {
 export const lotes: Lote[] = [
   { id: 'l1', name: 'Lote 1 — La Loma', crop: 'Maíz', ha: 96, bio: 71, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 3 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.495], [-30.110, -63.485], [-30.119, -63.485], [-30.119, -63.495]] },
   { id: 'l2', name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, bio: 66, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 2 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.484], [-30.110, -63.476], [-30.1186, -63.476], [-30.1186, -63.484]] },
-  { id: 'l3', name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, status: 'Con brechas', tone: 'warn', note: 'Limita con bosque nativo al este. 2 brechas de biodiversidad para RTRS.', polygon: [[-30.121, -63.495], [-30.121, -63.485], [-30.1285, -63.484], [-30.1295, -63.494]] },
+  { id: 'l3', name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, status: 'Mejoras necesarias', tone: 'warn', note: 'Limita con bosque nativo al este. 2 mejoras necesarias de biodiversidad para RTRS.', polygon: [[-30.121, -63.495], [-30.121, -63.485], [-30.1285, -63.484], [-30.1295, -63.494]] },
   { id: 'l4', name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, bio: 74, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo. Revisar superposición con zona de bosque protegido.', polygon: [[-30.121, -63.484], [-30.121, -63.477], [-30.128, -63.476], [-30.129, -63.483]] },
 ];
 
@@ -89,11 +89,11 @@ export const ejes: Eje[] = [
   { name: 'Provincial (Córdoba)', pct: 70, tone: 'warn', status: 'Parcial', detail: 'Ley Agroforestal · BPA · cobertura forestal pendiente en L3', normas: 'Ley Agroforestal de Córdoba; Buenas Prácticas Agropecuarias (BPA)', obs: 'Cobertura forestal del L3 por debajo del mínimo (en curso con corredores); faltan registros de aplicaciones y envases' },
   { name: 'Nacional', pct: 100, tone: 'ok', status: 'Cumple', detail: 'OTBN (Ley 26.331) · RENSPA vigente', normas: 'OTBN — Ordenamiento Territorial de Bosques Nativos (Ley 26.331); RENSPA', obs: 'Sin desmonte en categorías I/II; 0 ha de superposición con zonas protegidas' },
   { name: 'Internacional (EUDR)', pct: 78, tone: 'warn', status: 'Faltan datos', detail: 'Falta prueba de legalidad del Lote 4', normas: 'EUDR: geolocalización, no deforestación post 31/12/2020, legalidad', obs: 'Legalidad pendiente en L4' },
-  { name: 'Certificaciones', pct: 40, tone: 'bad', status: 'Con brechas', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad', normas: 'RTRS (objetivo); ISCC', obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' },
+  { name: 'Certificaciones', pct: 40, tone: 'bad', status: 'Mejoras necesarias', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad', normas: 'RTRS (objetivo); ISCC', obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' },
 ];
 
-export type ReqStatus = 'ok' | 'warn' | 'bad'; // ok=Cumple, warn=Falta dato, bad=Brecha
-export const reqLabel: Record<ReqStatus, string> = { ok: 'Cumple', warn: 'Falta dato', bad: 'Brecha' };
+export type ReqStatus = 'ok' | 'warn' | 'bad'; // ok=Cumple, warn=Falta dato, bad=Mejora necesaria
+export const reqLabel: Record<ReqStatus, string> = { ok: 'Cumple', warn: 'Falta dato', bad: 'Mejora necesaria' };
 
 export interface Requisito { rule: string; evidence: string; status: ReqStatus; fix?: string }
 export interface Certificacion { id: string; label: string; desc: string; items: Requisito[] }
@@ -103,7 +103,7 @@ export const certificaciones: Certificacion[] = [
   { id: 'rtrs', label: 'RTRS (soja responsable)', desc: 'Estándar internacional para soja; exige conservar y restaurar vegetación nativa y un plan de biodiversidad.', items: [
     { rule: 'Sin conversión de ecosistemas naturales', evidence: 'cambio de cobertura firmado 0x5a07…', status: 'ok' },
     { rule: 'Geolocalización de los lotes', evidence: 'polígono firmado 0x44c0…', status: 'ok' },
-    { rule: 'Áreas de vegetación nativa mantenidas o restauradas', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar 4,2 ha de corredores (A, B y C).' },
+    { rule: 'Áreas de vegetación nativa mantenidas o restauradas', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar corredores B y C (3,0 ha; el A ya está implantado).' },
     { rule: 'Plan de manejo de biodiversidad', evidence: 'no hay plan cargado', status: 'bad', fix: 'Syntra lo genera a partir del diagnóstico y los corredores elegidos.' },
     { rule: 'Buenas prácticas de aplicación de fitosanitarios', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones en "Registrar acción".' },
   ] },
@@ -114,7 +114,7 @@ export const certificaciones: Certificacion[] = [
   ] },
   { id: 'iscc', label: 'ISCC', desc: 'Certificación de sustentabilidad para biocombustibles y cadenas agroindustriales.', items: [
     { rule: 'Sin uso de tierras de alto valor de biodiversidad', evidence: 'superposición 0 ha con áreas protegidas', status: 'ok' },
-    { rule: 'Medidas de protección de la biodiversidad', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar corredores A y B (3,0 ha).' },
+    { rule: 'Medidas de protección de la biodiversidad', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar el corredor B (1,8 ha; el A ya está implantado).' },
     { rule: 'Registro de insumos y emisiones', evidence: 'sin registros de insumos', status: 'warn', fix: 'registrar siembra y fertilización.' },
   ] },
   { id: 'nacional', label: 'OTBN · Ley 26.331', desc: 'Eje nacional: Ordenamiento Territorial de Bosques Nativos (Ley 26.331 de Presupuestos Mínimos de Bosques Nativos).', items: [
@@ -123,7 +123,7 @@ export const certificaciones: Certificacion[] = [
     { rule: 'Lotes nuevos verificados contra la capa OTBN', evidence: 'Lote 4 sin analizar; linda con monte nativo', status: 'warn', fix: 'analizar el Lote 4 y verificar su superposición con bosque nativo.' },
   ] },
   { id: 'cordoba', label: 'Ley Agroforestal + BPA Córdoba', desc: 'Eje provincial: Ley Agroforestal de Córdoba (cobertura forestal mínima por predio) y Buenas Prácticas Agropecuarias (BPA).', items: [
-    { rule: 'Cobertura forestal mínima del predio según Ley Agroforestal (2–5% según zona)', evidence: 'cobertura nativa 3,1% del Lote 3; mínimo de la zona 5%', status: 'bad', fix: 'implantar corredores A, B y C (4,2 ha) con especies nativas.' },
+    { rule: 'Cobertura forestal mínima del predio según Ley Agroforestal (2–5% según zona)', evidence: 'cobertura nativa 3,1% del Lote 3; mínimo de la zona 5%', status: 'bad', fix: 'implantar corredores B y C (3,0 ha; el A ya está implantado) con especies nativas.' },
     { rule: 'Registro de aplicaciones fitosanitarias y distancias a zonas sensibles', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones con ubicación en "Registrar acción".' },
     { rule: 'BPA: rotación de cultivos', evidence: 'maíz / soja / trigo en los últimos 3 ciclos', status: 'ok' },
     { rule: 'BPA: cobertura de suelo entre campañas', evidence: 'NDVI invernal bajo (0,20) en el Lote 3', status: 'warn', fix: 'declarar cultivo de servicio o cobertura invernal.' },
@@ -180,8 +180,8 @@ export const procesamientoPasos = [
   { label: 'Obteniendo imágenes Sentinel-2', detail: '14 escenas · 2020-01 → 2026-11 · nubosidad < 20%' },
   { label: 'Calculando índices', detail: 'NDVI, NDWI, cambio de cobertura vs. 31/12/2020' },
   { label: 'Análisis de biodiversidad', detail: 'cobertura nativa · bordes · heterogeneidad → 64/100' },
-  { label: 'Comparando con la certificación objetivo', detail: 'RTRS · 5 requisitos · 2 brechas · 1 dato faltante' },
-  { label: 'Diseñando corredores biológicos', detail: '3 corredores · 4,2 ha · biodiversidad 64 → 78' },
+  { label: 'Comparando con la certificación objetivo', detail: 'RTRS · 5 requisitos · 2 mejoras necesarias · 1 dato faltante' },
+  { label: 'Diseñando corredores biológicos', detail: '3 corredores · 4,2 ha (1,2 implantadas) · biodiversidad 64 → 78' },
   { label: 'Generando hash SHA-256', detail: 'del diagnóstico completo' },
   { label: 'Anclando en blockchain', detail: 'Polygon Amoy (simulado)' },
 ];

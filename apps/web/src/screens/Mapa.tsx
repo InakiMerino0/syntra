@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ecorregion, establecimiento, lotes as lotesIniciales, capas, type Lote, type LatLng } from '@synta/data';
+import { useLotes, setLotes } from '../store/lotes';
 
 // Spherical excess approximation (Chamberlain & Duquette) — good enough for field-sized polygons.
 export function areaHa(poly: LatLng[]): number {
@@ -76,9 +77,15 @@ function Vertices({ pts, modo, selIdx, onMove, onSelect, onInsert, onCloseShape 
 const floating: CSSProperties = { position: 'absolute', zIndex: 1000, background: 'var(--surface)', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' };
 
 export default function Mapa() {
-  const [lotes, setLotes] = useState<Lote[]>(lotesIniciales);
-  const [selId, setSelId] = useState(lotesIniciales[2].id);
-  const [nombre, setNombre] = useState(`Lote ${lotesIniciales.length + 1} — Potrero Este`);
+  const lotes = useLotes();
+  const [params, setParams] = useSearchParams();
+  const [selId, setSelId] = useState(() => (lotes[2] ?? lotes[0])?.id ?? '');
+  const [nombreEd, setNombreEd] = useState<string | null>(null);
+  const usados = new Set(lotes.map((l) => l.name.split(' — ')[0].trim().toLowerCase()));
+  let nLibre = 1;
+  while (usados.has(`lote ${nLibre}`)) nLibre++;
+  const nombre = nombreEd ?? `Lote ${nLibre}`;
+  const setNombre = (v: string) => setNombreEd(v);
   const [capa, setCapa] = useState({ ndvi: false, bosque: true, focos: true });
   const [modo, setModo] = useState<Modo>('view');
   const [draft, setDraft] = useState<LatLng[]>([]);
@@ -93,6 +100,14 @@ export default function Mapa() {
   const startDraw = () => { setDraft([]); setSelIdx(null); setNaming(false); setConfirmDel(false); setModo('draw'); };
   const startEdit = () => { if (!sel) return; setDraft(sel.polygon); setSelIdx(null); setConfirmDel(false); setModo('edit'); };
   const cancel = () => { setModo('view'); setDraft([]); setSelIdx(null); setNaming(false); };
+  useEffect(() => {
+    if (params.get('dibujar') === '1') {
+      startDraw();
+      const next = new URLSearchParams(params);
+      next.delete('dibujar');
+      setParams(next, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const undo = () => setDraft((d) => d.slice(0, -1));
   const movePt = (i: number, p: LatLng) => setDraft((d) => d.map((q, j) => (j === i ? p : q)));
   const insertPt = (i: number, p: LatLng) => { setDraft((d) => [...d.slice(0, i), p, ...d.slice(i)]); setSelIdx(i); };
@@ -101,14 +116,18 @@ export default function Mapa() {
   const saveNew = () => {
     if (draft.length < 3) return;
     const id = `n${Date.now()}`;
-    const name = nombre.trim() || `Lote ${lotes.length + 1}`;
-    setLotes((ls) => [...ls, { id, name, crop: 'Sin definir', ha: areaHa(draft), bio: 50, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo dibujado en el mapa. Analizalo para ver sus brechas de certificación.', polygon: draft }]);
+    const name = nombre.trim() || `Lote ${nLibre}`;
+    setLotes((ls) => [...ls, { id, name, crop: 'Sin definir', ha: areaHa(draft), bio: 50, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo dibujado en el mapa. Analizalo para ver las mejoras necesarias para certificar.', polygon: draft }]);
     setSelId(id);
-    setNombre(`Lote ${lotes.length + 2}`);
+    setNombreEd(null);
     cancel();
   };
   const saveEdit = () => {
-    setLotes((ls) => ls.map((l) => (l.id === selId ? { ...l, polygon: draft, ha: areaHa(draft) } : l)));
+    setLotes((ls) => ls.map((l) => {
+      if (l.id !== selId) return l;
+      const changed = JSON.stringify(l.polygon) !== JSON.stringify(draft);
+      return changed ? { ...l, polygon: draft, ha: areaHa(draft) } : l;
+    }));
     cancel();
   };
   const removeLote = () => {
@@ -145,7 +164,7 @@ export default function Mapa() {
               <button key={l.id} type="button" aria-pressed={on} onClick={() => setSelId(l.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, width: '100%', minHeight: 56, padding: 12, borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', color: 'var(--ink)', background: on ? 'var(--primary-soft)' : 'var(--surface)', border: on ? '2px solid var(--primary)' : '1px solid var(--line)' }}>
                 <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8, width: '100%' }}>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>{l.name}</span>
-                  <span className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{l.ha} ha</span>
+                  <span className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{l.ha.toLocaleString('es-AR')} ha</span>
                 </span>
                 <span className="muted" style={{ fontSize: 12 }}>{l.crop} · {l.status}</span>
               </button>
@@ -221,7 +240,7 @@ export default function Mapa() {
           <div aria-live="polite" className="mapa-sel" style={{ ...floating, borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
               <strong style={{ fontSize: 16 }}>{sel.name}</strong>
-              <span className="muted" style={{ fontSize: 13 }}>{sel.ha} ha · {sel.crop}</span>
+              <span className="muted" style={{ fontSize: 13 }}>{sel.ha.toLocaleString('es-AR')} ha · {sel.crop}</span>
             </div>
             <span className="muted mapa-sel-note" style={{ fontSize: 13, lineHeight: 1.45 }}>{sel.note}</span>
             {confirmDel ? (

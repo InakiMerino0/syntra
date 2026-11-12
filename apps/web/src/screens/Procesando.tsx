@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { sha256, shortHash } from '@synta/ui';
-import { lotes, procesamientoPasos } from '@synta/data';
+import { biodiversidadLote3, procesamientoPasos, type Lote } from '@synta/data';
+import { useLote, setLotes } from '../store/lotes';
 
 const HASH_STEP = procesamientoPasos.findIndex((p) => p.label.startsWith('Generando hash'));
 const CHAIN_STEP = procesamientoPasos.findIndex((p) => p.label.startsWith('Anclando'));
@@ -15,7 +16,22 @@ const css = `
 
 export default function Procesando() {
   const { loteId } = useParams();
-  const lote = lotes.find((l) => l.id === loteId) ?? lotes.find((l) => l.id === 'l3')!;
+  const lote = useLote(loteId);
+  if (!lote) {
+    return (
+      <div className="page">
+        <div className="card stack" style={{ maxWidth: 480, gap: 12 }}>
+          <strong style={{ fontSize: 16 }}>Lote no encontrado</strong>
+          <span className="muted" style={{ fontSize: 14 }}>Ese lote no existe o fue borrado.</span>
+          <Link to="/mapa" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>Volver al mapa</Link>
+        </div>
+      </div>
+    );
+  }
+  return <Analisis lote={lote} />;
+}
+
+function Analisis({ lote }: { lote: Lote }) {
   const [step, setStep] = useState(0);
   const [run, setRun] = useState(0);
   const [hash, setHash] = useState('');
@@ -26,9 +42,15 @@ export default function Procesando() {
     let alive = true;
     sha256(JSON.stringify({ lote: lote.id, polygon: lote.polygon, timestamp: new Date().toISOString() })).then((h) => alive && setHash(h));
     return () => { clearInterval(t); alive = false; };
-  }, [run, lote]);
+  }, [run, lote.id, lote.polygon]);
 
   const finished = step >= procesamientoPasos.length;
+  useEffect(() => {
+    if (!finished) return;
+    setLotes((ls) => ls.map((l) => (l.id === lote.id && l.status === 'Sin analizar'
+      ? { ...l, status: 'Mejoras necesarias', bio: biodiversidadLote3.actual, tone: 'warn' as const, note: 'Analizado hoy. Mirá las mejoras necesarias para certificar.' }
+      : l)));
+  }, [finished, lote.id]);
   // Anchoring is simulated: fake tx and block derived from the real hash.
   const tx = hash ? shortHash('0x' + hash.slice(10).split('').reverse().join('')) : '…';
   const block = hash ? '#58.' + (214000 + (parseInt(hash.slice(2, 6), 16) % 1000)).toLocaleString('es-AR') : '';
@@ -41,7 +63,7 @@ export default function Procesando() {
       <style>{css}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
         <span style={{ fontSize: 13, color: 'var(--dark-muted)', letterSpacing: 0.5, textTransform: 'uppercase' }}>Analizando y certificando</span>
-        <h1 className="display" style={{ fontSize: 'clamp(24px, 6vw, 36px)', overflowWrap: 'anywhere' }}>{lote.name} · {lote.ha} ha</h1>
+        <h1 className="display" style={{ fontSize: 'clamp(24px, 6vw, 36px)', overflowWrap: 'anywhere' }}>{lote.name} · {lote.ha.toLocaleString('es-AR')} ha</h1>
       </div>
 
       <ol aria-live="polite" style={{ listStyle: 'none', margin: 0, padding: 'clamp(16px, 5vw, 28px)', width: '100%', maxWidth: 560, background: '#1A3326', border: '1px solid var(--dark-line)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>

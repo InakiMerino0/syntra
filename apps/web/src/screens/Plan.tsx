@@ -12,8 +12,8 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.
 
 export default function Plan() {
   const [params, setParams] = useSearchParams();
-  const initial = certificaciones.some((c) => c.id === params.get('cert')) ? params.get('cert')! : 'rtrs';
-  const [certId, setCertId] = useState(initial);
+  const certParam = params.get('cert');
+  const certId = certificaciones.some((c) => c.id === certParam) ? certParam! : 'rtrs';
   const [fase, setFase] = useState<Fase>('idle');
   const [paso, setPaso] = useState(0);
   const [hechas, setHechas] = useState<Set<string>>(new Set());
@@ -30,12 +30,10 @@ export default function Plan() {
 
   const clear = () => { timers.current.forEach((t) => window.clearTimeout(t)); timers.current = []; };
   useEffect(() => clear, []);
+  // Reset the generated plan whenever the selected certification changes (button, link or Back).
+  useEffect(() => { clear(); setFase('idle'); setHechas(new Set()); }, [certId]);
 
   const elegir = (id: string) => {
-    clear();
-    setCertId(id);
-    setFase('idle');
-    setHechas(new Set());
     setParams({ cert: id }, { replace: true });
   };
 
@@ -122,7 +120,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
           <ProgressBar value={pct} label={`Avance hacia ${r.certLabel} con las acciones hechas`} />
         </div>
         <span style={{ fontSize: 12, color: 'var(--dark-muted)', ...wrap }}>
-          {plan.acciones.length} acciones · {r.porPrioridad.alta} alta · {r.porPrioridad.media} media · {r.porPrioridad.baja} baja
+          {plan.acciones.length} {plan.acciones.length === 1 ? 'acción' : 'acciones'} · {r.porPrioridad.alta} alta · {r.porPrioridad.media} media · {r.porPrioridad.baja} baja
           {r.rinde && <> · *fuente a citar: {r.rinde.fuente}</>}
         </span>
         <div className="row" style={{ gap: 10 }}>
@@ -134,7 +132,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
       <div className="row" style={{ alignItems: 'flex-start', gap: 24 }}>
         <section className="stack" style={{ flex: '3 1 480px', minWidth: 0, gap: 20 }} aria-labelledby="acciones">
           <h2 id="acciones" className="section-title">Qué hacer y cuándo</h2>
-          {plan.acciones.length === 0 && <p className="card muted" style={{ margin: 0 }}>No hay brechas: ya cumplís todos los requisitos.</p>}
+          {plan.acciones.length === 0 && <p className="card muted" style={{ margin: 0 }}>No hay mejoras necesarias: ya cumplís todos los requisitos.</p>}
           {plazos.map((pz) => {
             const items = plan.acciones.filter((a) => a.plazo === pz);
             if (!items.length) return null;
@@ -211,7 +209,7 @@ function Accion({ a, done, toggle }: { a: AccionPlan; done: boolean; toggle: (id
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0 20px' }}>
             {!a.link.startsWith('/accion') && (
-              <Link to={a.link} style={linkStyle}>{a.link.startsWith('/procesando') ? 'Analizar ahora →' : 'Ver borrador →'}</Link>
+              <Link to={a.link} style={linkStyle}>{a.linkLabel ?? (a.link.startsWith('/procesando') ? 'Analizar ahora →' : 'Ver detalle →')}</Link>
             )}
             <Link to={a.link.startsWith('/accion') ? a.link : '/accion'} style={linkStyle}>Registrar cuando lo hagas →</Link>
           </div>
