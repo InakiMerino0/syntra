@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Badge, ProgressBar } from '@synta/ui';
+import HashTodo from '../components/HashTodo';
 import { establecimiento, kpis, ejes, lotes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
 
 const rtrs = certificaciones.find((c) => c.id === 'rtrs')!;
@@ -23,6 +24,7 @@ export default function Panel() {
         </div>
         <div className="row" style={{ gap: 10, alignItems: 'center' }}>
           <Badge tone="warn">Datos de demostración</Badge>
+          <HashTodo variant="secondary" />
           <Link to="/mapa" className="btn btn-primary">+ Nuevo lote</Link>
         </div>
       </header>

@@ -17,7 +17,7 @@ export default function Landing() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexWrap: 'wrap', background: 'var(--bg)', color: 'var(--ink)' }}>
-      <section style={{ flex: '1 1 520px', background: 'var(--dark)', color: 'var(--dark-ink)', padding: 'clamp(32px, 5vw, 56px) clamp(16px, 5vw, 64px)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 48 }}>
+      <section style={{ flex: '1 1 520px', minWidth: 0, background: 'var(--dark)', color: 'var(--dark-ink)', padding: 'clamp(32px, 5vw, 56px) clamp(16px, 5vw, 64px)', paddingTop: 'max(clamp(32px, 5vw, 56px), calc(env(safe-area-inset-top, 0px) + 16px))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 'clamp(32px, 6vw, 48px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Logo size={36} />
           <span className="display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>Synta</span>
@@ -26,10 +26,10 @@ export default function Landing() {
           <h1 className="display" style={{ margin: 0, fontSize: 'clamp(34px, 5vw, 52px)', lineHeight: 1.05, letterSpacing: -1.5 }}>
             Certificá para exportar. Te decimos qué falta y cómo cerrarlo.
           </h1>
-          <p style={{ margin: 0, fontSize: 19, lineHeight: 1.55, color: '#C3D2C8' }}>
+          <p style={{ margin: 0, fontSize: 'clamp(17px, 2.2vw, 19px)', lineHeight: 1.55, color: '#C3D2C8' }}>
             Ayudamos a productores y agroexportadores a acceder a mercados internacionales: adaptamos los parámetros a cada certificación y te indicamos cómo incorporar biodiversidad para cumplirla.
           </p>
-          <ol style={{ listStyle: 'none', padding: 0, margin: '16px 0 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
+          <ol style={{ listStyle: 'none', padding: 0, margin: '16px 0 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16 }}>
             {STEPS.map((s) => (
               <li key={s.n} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 18, border: '1px solid var(--dark-line)', borderRadius: 12 }}>
                 <span className="mono" style={{ fontSize: 12, color: 'var(--accent)' }}>{s.n}</span>
@@ -38,11 +38,12 @@ export default function Landing() {
               </li>
             ))}
           </ol>
+          <Link to="/panel" className="btn btn-accent landing-quick" style={{ minHeight: 48, alignSelf: 'flex-start' }}>Entrar como productor demo</Link>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: 'var(--dark-muted)' }}>Hack to the Future · Córdoba Tech Week 2026 · Vertical Agro</p>
       </section>
 
-      <section style={{ flex: '1 1 420px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', boxSizing: 'border-box' }}>
+      <section style={{ flex: '1 1 420px', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', boxSizing: 'border-box' }}>
         <form onSubmit={onSubmit} aria-labelledby="login-title" style={{ width: '100%', maxWidth: 400, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 'clamp(24px, 5vw, 36px)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <h2 id="login-title" className="display" style={{ margin: 0, fontSize: 26 }}>Ingresar</h2>

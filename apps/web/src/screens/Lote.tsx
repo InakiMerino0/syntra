@@ -23,7 +23,7 @@ export default function Lote() {
       <header className="page-header">
         <div className="stack" style={{ gap: 6 }}>
           <h1 className="page-title">{lote.name}</h1>
-          <span className="muted" style={{ fontSize: 14 }}>{lote.ha} ha · {lote.crop} 2026/27 · Centroide {fmt(lat)}, {fmt(lng)} · Diagnóstico de hoy 14:32</span>
+          <span className="muted" style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{lote.ha} ha · {lote.crop} 2026/27 · Centroide {fmt(lat)}, {fmt(lng)} · Diagnóstico de hoy 14:32</span>
         </div>
         <div className="row" style={{ gap: 10 }}>
           <Link to={`/procesando/${lote.id}`} className="btn btn-secondary">Re-analizar</Link>
@@ -73,10 +73,10 @@ function Certificacion({ onBio }: { onBio: () => void }) {
             <button type="button" className="btn btn-accent" style={{ marginTop: 8 }} onClick={onBio}>Ver corredores recomendados</button>
           )}
         </div>
-        <ul className="card" style={{ flex: '3 1 480px', minWidth: 0, padding: '8px 20px', margin: 0, listStyle: 'none' }}>
+        <ul className="card" style={{ flex: '3 1 480px', minWidth: 0, padding: '8px clamp(14px, 4vw, 20px)', margin: 0, listStyle: 'none' }}>
           {cert.items.map((it) => (
             <li key={it.rule} className="row" style={{ justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', padding: '16px 0', borderBottom: '1px solid var(--line-soft)' }}>
-              <div className="stack" style={{ flex: '1 1 320px', gap: 4 }}>
+              <div className="stack" style={{ flex: '1 1 220px', minWidth: 0, gap: 4 }}>
                 <span style={{ fontSize: 15, fontWeight: 600 }}>{it.rule}</span>
                 <span className="muted" style={{ fontSize: 13 }}>Evidencia: {it.evidence}</span>
                 {it.fix && <span style={{ fontSize: 13, color: 'var(--warn-fg)', fontWeight: 500 }}>Para cerrarlo: {it.fix}</span>}
@@ -98,7 +98,7 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
     <div className="row" style={{ alignItems: 'flex-start' }}>
       <figure className="card" style={{ flex: '3 1 480px', minWidth: 0, margin: 0, padding: 0, overflow: 'hidden' }}>
         <div role="img" aria-label={`${lote.name} con ${corredores.length} corredores biológicos sugeridos que lo conectan con el monte nativo al este`}>
-          <MapContainer bounds={[...lote.polygon, ...capas.bosqueNativo]} scrollWheelZoom={false} style={{ height: 360 }}>
+          <MapContainer bounds={[...lote.polygon, ...capas.bosqueNativo]} scrollWheelZoom={false} className="lote-map">
             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Tiles © Esri" />
             <Polygon positions={capas.bosqueNativo} pathOptions={{ color: '#2e4a26', fillColor: '#2e4a26', fillOpacity: 0.7 }} />
             <Polygon positions={lote.polygon} pathOptions={{ color: '#fff', weight: 2, fillOpacity: 0.05 }} />
@@ -118,9 +118,9 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
       <div className="stack" style={{ flex: '2 1 320px', minWidth: 0, gap: 16 }}>
         <div className="card stack" style={{ gap: 14 }}>
           <div className="row" style={{ alignItems: 'baseline', gap: 12 }}>
-            <span className="display" style={{ fontSize: 48, lineHeight: 1 }}>{bio.actual}</span>
+            <span className="display" style={{ fontSize: 'clamp(36px, 10vw, 48px)', lineHeight: 1 }}>{bio.actual}</span>
             <span className="muted" style={{ fontSize: 20 }} aria-hidden="true">→</span>
-            <span className="display" style={{ fontSize: 48, lineHeight: 1, color: 'var(--primary)' }}>{bio.proyectado}</span>
+            <span className="display" style={{ fontSize: 'clamp(36px, 10vw, 48px)', lineHeight: 1, color: 'var(--primary)' }}>{bio.proyectado}</span>
             <span className="muted" style={{ fontSize: 13 }}>índice de biodiversidad actual → con corredores</span>
           </div>
           {bio.breakdown.map((b) => (
@@ -135,7 +135,7 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
           <span style={{ fontSize: 13, lineHeight: 1.45 }}>Fuente: {bio.rinde.fuente}.</span>
         </div>
       </div>
-      <div style={{ flex: '1 1 100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+      <div style={{ flex: '1 1 100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 16 }}>
         {corredores.map((c) => (
           <div key={c.id} className="card stack" style={{ gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -200,7 +200,7 @@ function Satelital() {
 function Trazabilidad({ short }: { short: string }) {
   const regs = eventos.filter((e) => e.lote === short);
   return (
-    <div className="card" style={{ padding: '8px 20px' }}>
+    <div className="card" style={{ padding: '8px clamp(14px, 4vw, 20px)' }}>
       {regs.length === 0 ? (
         <p className="muted">Todavía no hay registros firmados para este lote.</p>
       ) : (

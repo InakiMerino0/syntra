@@ -37,18 +37,18 @@ export default function Procesando() {
     i === HASH_STEP && hash ? `${shortHash(hash)} · ${d}` : i === CHAIN_STEP && hash ? `${d} · tx ${tx}` : d;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0F1F17', color: 'var(--dark-ink)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '48px 16px' }}>
+    <div className="screen-fill" style={{ background: '#0F1F17', color: 'var(--dark-ink)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'clamp(20px, 4vh, 28px)', padding: 'clamp(24px, 6vh, 48px) 16px calc(clamp(24px, 6vh, 48px) + env(safe-area-inset-bottom, 0px))' }}>
       <style>{css}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
         <span style={{ fontSize: 13, color: 'var(--dark-muted)', letterSpacing: 0.5, textTransform: 'uppercase' }}>Analizando y certificando</span>
-        <h1 className="display" style={{ fontSize: 'clamp(26px, 6vw, 36px)' }}>{lote.name} · {lote.ha} ha</h1>
+        <h1 className="display" style={{ fontSize: 'clamp(24px, 6vw, 36px)', overflowWrap: 'anywhere' }}>{lote.name} · {lote.ha} ha</h1>
       </div>
 
       <ol aria-live="polite" style={{ listStyle: 'none', margin: 0, padding: 'clamp(16px, 5vw, 28px)', width: '100%', maxWidth: 560, background: '#1A3326', border: '1px solid var(--dark-line)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {procesamientoPasos.map((p, i) => {
           const done = i < step, active = i === step;
           return (
-            <li key={p.label} style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '10px 0' }}>
+            <li key={p.label} style={{ display: 'flex', gap: 'clamp(12px, 3vw, 16px)', alignItems: 'flex-start', padding: '10px 0' }}>
               <span aria-hidden="true" style={{ width: 28, height: 28, borderRadius: '50%', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', ...(done ? { background: 'var(--accent)' } : { border: `2px solid ${active ? 'var(--accent)' : '#3D5A48'}` }) }}>
                 {done && <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 7.5 L5.5 10.5 L11.5 3.5" fill="none" stroke="var(--dark)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 {active && <span className="proc-spin" />}
@@ -69,9 +69,9 @@ export default function Procesando() {
           <span role="status" style={{ fontSize: 14, color: '#C3D2C8' }}>
             Registro anclado en el bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{block}</span>
           </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-            <Link to={`/lote/${lote.id}`} className="btn btn-accent" style={{ minHeight: 48 }}>Ver qué me falta para certificar</Link>
-            <button type="button" className="btn btn-ghost-dark" style={{ minHeight: 48 }} onClick={() => setRun((r) => r + 1)}>Repetir animación</button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', width: '100%', maxWidth: 560 }}>
+            <Link to={`/lote/${lote.id}`} className="btn btn-accent" style={{ minHeight: 48, flex: '1 1 240px' }}>Ver qué me falta para certificar</Link>
+            <button type="button" className="btn btn-ghost-dark" style={{ minHeight: 48, flex: '1 1 180px' }} onClick={() => setRun((r) => r + 1)}>Repetir animación</button>
           </div>
         </div>
       )}

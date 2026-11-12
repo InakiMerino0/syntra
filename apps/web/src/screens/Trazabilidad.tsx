@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FakeQR, sha256, shortHash } from '@synta/ui';
+import HashTodo from '../components/HashTodo';
 import { eventos, eventKinds, type EventKind, type Evento } from '@synta/data';
 
 const PUBLIC_URL = 'https://synta.app/v/184';
@@ -36,11 +37,14 @@ export default function Trazabilidad() {
 
   return (
     <div className="page">
-      <header className="stack" style={{ gap: 6 }}>
-        <h1 className="page-title">Trazabilidad</h1>
-        <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-          Cada registro tiene un hash SHA-256 anclado en blockchain. Cualquiera puede recalcularlo y comprobar que no cambió.
-        </p>
+      <header className="page-header">
+        <div className="stack" style={{ gap: 6, flex: '1 1 320px', minWidth: 0 }}>
+          <h1 className="page-title">Trazabilidad</h1>
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+            Cada registro tiene un hash SHA-256 anclado en blockchain. Cualquiera puede recalcularlo y comprobar que no cambió.
+          </p>
+        </div>
+        <HashTodo variant="primary" />
       </header>
 
       <div role="group" aria-label="Filtrar por tipo" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Badge, FakeQR, Logo, sha256, type Tone } from '@synta/ui';
 import { biodiversidadLote3, corredores, establecimiento, lotes } from '@synta/data';
+import HashTodo from '../components/HashTodo';
 import './pasaporte/pasaporte.css';
 
 const URL_VERIFICACION = 'https://synta.app/v/184';
@@ -15,8 +16,8 @@ const facts = [
 ];
 
 const ejes: { eje: string; normas: string; res: string; tone: Tone; obs: string }[] = [
-  { eje: 'Provincial / zonal', normas: 'OTBN Córdoba; distancias de aplicación', res: 'Cumple', tone: 'ok', obs: 'Falta registro de aplicaciones (L3)' },
-  { eje: 'Nacional', normas: 'Ley 26.331; RENSPA', res: 'Cumple', tone: 'ok', obs: '—' },
+  { eje: 'Provincial (Córdoba)', normas: 'Ley Agroforestal de Córdoba; Buenas Prácticas Agropecuarias (BPA)', res: 'Cumple', tone: 'ok', obs: 'Cobertura forestal mínima en curso con corredores (L3); falta registro de aplicaciones' },
+  { eje: 'Nacional', normas: 'OTBN (Ley 26.331); RENSPA', res: 'Cumple', tone: 'ok', obs: '—' },
   { eje: 'Internacional', normas: 'EUDR: geolocalización, no deforestación, legalidad', res: 'Parcial', tone: 'warn', obs: 'Legalidad pendiente en L4' },
   { eje: 'Certificaciones', normas: 'RTRS (objetivo); ISCC', res: 'Con brechas', tone: 'bad', obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' },
 ];
@@ -51,6 +52,7 @@ export default function Pasaporte() {
       <div className="pasaporte-actions">
         <span role="status" className="muted" style={{ fontSize: 13 }}>{copiado}</span>
         <button type="button" className="btn btn-secondary" onClick={compartir}>Compartir link</button>
+        <HashTodo variant="secondary" />
         <button type="button" className="btn btn-primary" onClick={() => window.print()}>Descargar PDF</button>
       </div>
 
@@ -133,7 +135,11 @@ export default function Pasaporte() {
             {hashes.map((h) => <li key={h.k}>{h.k} — {h.v}</li>)}
             <li>Este pasaporte — {hash ?? 'calculando…'}</li>
           </ul>
-          <p style={{ fontSize: 12 }}>Red: Polygon Amoy (testnet). Fuentes: Copernicus Sentinel-2 L2A, NASA FIRMS, capa OTBN Córdoba, declaraciones del productor. Este documento es un prototipo y no constituye una certificación oficial.</p>
+          <div className="pasaporte-hashall">
+            <p>¿Querés una sola huella de todo lo que Synta tiene del establecimiento? Hasheamos cada conjunto de datos y los combinamos en una huella raíz.</p>
+            <HashTodo variant="primary" />
+          </div>
+          <p style={{ fontSize: 12 }}>Red: Polygon Amoy (testnet). Fuentes: Copernicus Sentinel-2 L2A, NASA FIRMS, capa OTBN (Ley 26.331), declaraciones del productor. Este documento es un prototipo y no constituye una certificación oficial.</p>
         </section>
       </article>
     </div>

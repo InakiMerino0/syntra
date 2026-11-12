@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { sha256, shortHash } from '@synta/ui';
 import { establecimiento, lotes, tiposAccion } from '@synta/data';
 
@@ -7,11 +7,13 @@ const srOnly = { position: 'absolute', width: 1, height: 1, overflow: 'hidden', 
 
 export default function Accion() {
   const navigate = useNavigate();
-  const [tipoId, setTipoId] = useState('corredor');
+  const [params] = useSearchParams();
+  const inicial = tiposAccion.find((t) => t.id === params.get('tipo')) ?? tiposAccion[0];
+  const [tipoId, setTipoId] = useState(inicial.id);
   const [loteId, setLoteId] = useState('l3');
   const [fecha, setFecha] = useState('2026-11-12');
-  const [v1, setV1] = useState(tiposAccion[0].v1);
-  const [v2, setV2] = useState(tiposAccion[0].v2);
+  const [v1, setV1] = useState(inicial.v1);
+  const [v2, setV2] = useState(inicial.v2);
   const [notas, setNotas] = useState('');
   const [archivo, setArchivo] = useState('');
   const [fileFocus, setFileFocus] = useState(false);
@@ -60,7 +62,7 @@ export default function Accion() {
       </header>
 
       <div className="row" style={{ gap: 20, alignItems: 'flex-start' }}>
-        <form onSubmit={onSubmit} className="card" style={{ flex: '3 1 420px', minWidth: 0, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <form onSubmit={onSubmit} className="card" style={{ flex: '3 1 420px', minWidth: 0, padding: 'clamp(16px, 5vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <fieldset style={{ margin: 0, padding: 0, border: 0 }}>
             <legend style={{ fontSize: 13, fontWeight: 600, padding: '0 0 10px' }}>Tipo de acción</legend>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -70,7 +72,7 @@ export default function Accion() {
             </div>
           </fieldset>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 16 }}>
             <div className="field">
               <label htmlFor="lote">Lote</label>
               <select id="lote" className="input" value={loteId} onChange={(e) => setLoteId(e.target.value)}>
@@ -111,16 +113,16 @@ export default function Accion() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              <button type="submit" className="btn btn-primary" style={{ minHeight: 48, fontSize: 15 }} disabled={estado === 'firmando'}>
+              <button type="submit" className="btn btn-primary" style={{ minHeight: 48, fontSize: 15, flex: '1 1 180px' }} disabled={estado === 'firmando'}>
                 {estado === 'firmando' ? 'Firmando…' : 'Firmar y registrar'}
               </button>
-              <button type="button" className="btn btn-secondary" style={{ minHeight: 48, fontSize: 15 }} onClick={() => navigate('/panel')}>Cancelar</button>
+              <button type="button" className="btn btn-secondary" style={{ minHeight: 48, fontSize: 15, flex: '1 1 120px' }} onClick={() => navigate('/panel')}>Cancelar</button>
             </div>
           )}
           <span aria-live="polite" style={srOnly}>{estado === 'firmando' ? 'Firmando registro…' : ''}</span>
         </form>
 
-        <aside aria-labelledby="prev" className="card-dark" style={{ flex: '2 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <aside aria-labelledby="prev" className="card-dark" style={{ flex: '2 1 300px', minWidth: 0, padding: 'clamp(16px, 5vw, 24px)', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <h2 id="prev" style={{ fontSize: 15 }}>Qué se va a firmar</h2>
           <pre className="mono" style={{ margin: 0, padding: 16, background: '#0d1b14', borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#c3d2c8', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{payload}</pre>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>

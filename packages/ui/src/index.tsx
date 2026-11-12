@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import './styles.css';
 
 export type Tone = 'ok' | 'warn' | 'bad';
@@ -16,29 +16,85 @@ export function Logo({ size = 28, color = '#7BC59A' }: { size?: number; color?: 
 export const NAV = [
   { to: '/panel', label: 'Panel' },
   { to: '/mapa', label: 'Mapa y lotes' },
+  { to: '/plan', label: 'Plan de acción' },
   { to: '/trazabilidad', label: 'Trazabilidad' },
   { to: '/pasaporte', label: 'Pasaporte' },
   { to: '/accion', label: 'Registrar acción' },
 ];
 
-export function Sidebar() {
+const NAV_ID = 'app-nav';
+const MOBILE_MQ = '(max-width: 800px)';
+
+/** Desktop: fixed sidebar. Mobile (≤800px): the same nav becomes a slide-in drawer (see .sidebar in styles.css). */
+export function Sidebar({ open = false, onClose, onDismiss }: { open?: boolean; onClose?: () => void; onDismiss?: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (open) closeRef.current?.focus();
+  }, [open]);
   return (
-    <nav aria-label="Principal" className="sidebar">
-      <NavLink to="/panel" className="sidebar-logo"><Logo />Synta</NavLink>
+    <nav id={NAV_ID} aria-label="Principal" className="sidebar" data-open={open}>
+      <div className="sidebar-head">
+        <NavLink to="/panel" className="sidebar-logo" onClick={onClose}><Logo />Synta</NavLink>
+        <button ref={closeRef} type="button" className="sidebar-close" aria-label="Cerrar menú" onClick={onDismiss ?? onClose}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
+        </button>
+      </div>
       {NAV.map((n) => (
-        <NavLink key={n.to} to={n.to} className="nav-link">{n.label}</NavLink>
+        <NavLink key={n.to} to={n.to} className="nav-link" onClick={onClose}>{n.label}</NavLink>
       ))}
       <div className="sidebar-foot">Datos de demostración</div>
     </nav>
   );
 }
 
-/** Layout for every screen except the landing: fixed sidebar + routed content. */
+/** Layout for every screen except the landing: fixed sidebar (desktop) or fixed top bar + drawer (mobile). */
 export function AppLayout() {
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+
+  const close = (refocus = false) => {
+    setOpen(false);
+    if (refocus) menuRef.current?.focus();
+  };
+
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const onChange = () => { if (!mq.matches) setOpen(false); };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpen(false); menuRef.current?.focus(); }
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+    mainRef.current?.setAttribute('inert', '');
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKey);
+      mainRef.current?.removeAttribute('inert');
+    };
+  }, [open]);
+
   return (
     <div className="app">
-      <Sidebar />
-      <main className="content"><Outlet /></main>
+      <header className="topbar">
+        <button ref={menuRef} type="button" className="topbar-menu" aria-label="Abrir menú" aria-expanded={open} aria-controls={NAV_ID} onClick={() => setOpen(true)}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7 H20 M4 12 H20 M4 17 H20" /></svg>
+        </button>
+        <NavLink to="/panel" className="topbar-logo"><Logo size={24} />Synta</NavLink>
+      </header>
+      <div className="drawer-backdrop" data-open={open} aria-hidden="true" onClick={() => close(true)} />
+      <Sidebar open={open} onClose={() => close(false)} onDismiss={() => close(true)} />
+      <main ref={mainRef} className="content"><Outlet /></main>
     </div>
   );
 }

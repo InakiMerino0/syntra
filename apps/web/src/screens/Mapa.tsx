@@ -61,6 +61,7 @@ export default function Mapa() {
   const [nombre, setNombre] = useState(`Lote ${lotesIniciales.length + 1} — Potrero Este`);
   const [capa, setCapa] = useState({ ndvi: false, bosque: true, focos: true });
   const [modo, setModo] = useState<Modo>(null);
+  const [capasOpen, setCapasOpen] = useState(false);
   const [map, setMap] = useState<L.Map | null>(null);
   const sel = lotes.find((l) => l.id === selId);
   const totalHa = Math.round(lotes.reduce((s, l) => s + l.ha, 0));
@@ -83,12 +84,12 @@ export default function Mapa() {
   ] as const;
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: '100vh' }}>
-      <aside aria-label="Lotes" style={{ flex: '1 1 300px', maxWidth: '100%', background: 'var(--surface)', borderRight: '1px solid var(--line)', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <h1 className="display" style={{ fontSize: 24 }}>Mapa y lotes</h1>
-          <span className="muted" style={{ fontSize: 13 }}>La Esperanza · {totalHa} ha mapeadas</span>
-        </div>
+    <div className="mapa screen-fill">
+      <header className="mapa-head">
+        <h1 className="display" style={{ fontSize: 24 }}>Mapa y lotes</h1>
+        <span className="muted" style={{ fontSize: 13 }}>La Esperanza · {totalHa} ha mapeadas</span>
+      </header>
+      <aside aria-label="Lotes" className="mapa-list">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {lotes.map((l) => {
             const on = l.id === selId;
@@ -113,7 +114,7 @@ export default function Mapa() {
         </div>
       </aside>
 
-      <section aria-label="Mapa satelital" style={{ flex: '999 1 520px', minWidth: 0, position: 'relative', minHeight: 'max(520px, 100vh)' }}>
+      <section aria-label="Mapa satelital" className="mapa-map">
         <MapContainer ref={setMap} center={establecimiento.center} zoom={14} style={{ position: 'absolute', inset: 0 }}>
           <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Tiles © Esri" />
           {capa.bosque && (
@@ -146,7 +147,7 @@ export default function Mapa() {
           <MapEffects selected={sel} onCreate={onCreate} onModo={setModo} />
         </MapContainer>
 
-        <div role="toolbar" aria-label="Herramientas de dibujo" style={{ ...floating, top: 16, left: 56, display: 'flex', gap: 6, padding: 6 }}>
+        <div role="toolbar" aria-label="Herramientas de dibujo" className="mapa-tools" style={{ ...floating, display: 'flex', gap: 6, padding: 6 }}>
           <button type="button" aria-label="Dibujar polígono" aria-pressed={modo === 'draw'} style={iconBtn(modo === 'draw')}
             onClick={() => (map?.pm.globalDrawModeEnabled() ? map.pm.disableDraw() : map?.pm.enableDraw('Polygon'))}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M5 19 L4 7 L13 4 L20 12 L14 20 Z" /><circle cx="4" cy="7" r="1.5" fill="currentColor" /><circle cx="13" cy="4" r="1.5" fill="currentColor" /></svg>
@@ -159,7 +160,11 @@ export default function Mapa() {
           </button>
         </div>
 
-        <fieldset style={{ ...floating, top: 16, right: 16, margin: 0, border: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 210 }}>
+        <button type="button" className="mapa-capas-toggle" aria-expanded={capasOpen} aria-controls="mapa-capas" onClick={() => setCapasOpen((o) => !o)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M12 3 L22 8 L12 13 L2 8 Z" /><path d="M2 13 L12 18 L22 13" /></svg>
+          Capas
+        </button>
+        <fieldset id="mapa-capas" className="mapa-capas" data-open={capasOpen} style={{ ...floating, margin: 0, border: 0, padding: 12 }}>
           <legend style={{ float: 'left', fontSize: 12, fontWeight: 700, padding: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 }} className="muted">Capas</legend>
           {capasUI.map((c) => (
             <button key={c.key} type="button" aria-pressed={capa[c.key]} onClick={() => setCapa((s) => ({ ...s, [c.key]: !s[c.key] }))}
@@ -171,13 +176,13 @@ export default function Mapa() {
         </fieldset>
 
         {sel && (
-          <div aria-live="polite" style={{ ...floating, left: 16, right: 16, bottom: 24, maxWidth: 420, borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div aria-live="polite" className="mapa-sel" style={{ ...floating, borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
               <strong style={{ fontSize: 16 }}>{sel.name}</strong>
               <span className="muted" style={{ fontSize: 13 }}>{sel.ha} ha · {sel.crop}</span>
             </div>
-            <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>{sel.note}</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span className="muted mapa-sel-note" style={{ fontSize: 13, lineHeight: 1.45 }}>{sel.note}</span>
+            <div className="mapa-sel-actions">
               <Link to={`/procesando/${sel.id}`} className="btn btn-primary">Analizar y certificar lote</Link>
               <Link to={`/lote/${sel.id}`} className="btn btn-secondary">Ver detalle</Link>
             </div>

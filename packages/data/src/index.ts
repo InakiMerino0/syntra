@@ -42,11 +42,14 @@ export const kpis = [
   { label: 'Deforestación post 2020', value: '0 ha', sub: 'detectada en el establecimiento' },
 ];
 
-export const ejes = [
-  { name: 'Provincial / zonal', pct: 92, tone: 'ok' as Tone, status: 'Cumple', detail: 'OTBN Córdoba · 1 dato pendiente' },
-  { name: 'Nacional', pct: 100, tone: 'ok' as Tone, status: 'Cumple', detail: 'Ley 26.331 · RENSPA vigente' },
-  { name: 'Internacional (EUDR)', pct: 78, tone: 'warn' as Tone, status: 'Faltan datos', detail: 'Falta prueba de legalidad del Lote 4' },
-  { name: 'Certificaciones', pct: 40, tone: 'bad' as Tone, status: 'Con brechas', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad' },
+export interface Eje { name: string; pct: number; tone: Tone; status: string; detail: string; normas: string; obs: string }
+
+/** Regulatory axes. Nacional = OTBN (Ley 26.331); Provincial (Córdoba) = Ley Agroforestal + BPA. */
+export const ejes: Eje[] = [
+  { name: 'Provincial (Córdoba)', pct: 70, tone: 'warn', status: 'Parcial', detail: 'Ley Agroforestal · BPA · cobertura forestal pendiente en L3', normas: 'Ley Agroforestal de Córdoba; Buenas Prácticas Agropecuarias (BPA)', obs: 'Cobertura forestal del L3 por debajo del mínimo (en curso con corredores); faltan registros de aplicaciones y envases' },
+  { name: 'Nacional', pct: 100, tone: 'ok', status: 'Cumple', detail: 'OTBN (Ley 26.331) · RENSPA vigente', normas: 'OTBN — Ordenamiento Territorial de Bosques Nativos (Ley 26.331); RENSPA', obs: 'Sin desmonte en categorías I/II; 0 ha de superposición con zonas protegidas' },
+  { name: 'Internacional (EUDR)', pct: 78, tone: 'warn', status: 'Faltan datos', detail: 'Falta prueba de legalidad del Lote 4', normas: 'EUDR: geolocalización, no deforestación post 31/12/2020, legalidad', obs: 'Legalidad pendiente en L4' },
+  { name: 'Certificaciones', pct: 40, tone: 'bad', status: 'Con brechas', detail: 'RTRS: faltan vegetación nativa y plan de biodiversidad', normas: 'RTRS (objetivo); ISCC', obs: 'Vegetación nativa y plan de biodiversidad: en curso con corredores' },
 ];
 
 export type ReqStatus = 'ok' | 'warn' | 'bad'; // ok=Cumple, warn=Falta dato, bad=Brecha
@@ -74,10 +77,17 @@ export const certificaciones: Certificacion[] = [
     { rule: 'Medidas de protección de la biodiversidad', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar corredores A y B (3,0 ha).' },
     { rule: 'Registro de insumos y emisiones', evidence: 'sin registros de insumos', status: 'warn', fix: 'registrar siembra y fertilización.' },
   ] },
-  { id: 'local', label: 'Marco provincial y nacional', desc: 'Ordenamiento de bosque nativo de Córdoba y Ley 26.331 de Bosques.', items: [
-    { rule: 'OTBN Córdoba: sin intervención en zonas protegidas', evidence: 'superposición 0 ha con capa OTBN', status: 'ok' },
-    { rule: 'Ley 26.331: sin desmonte de bosque nativo', evidence: 'cambio de cobertura 2020–2026', status: 'ok' },
-    { rule: 'Distancias de aplicación de fitosanitarios', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones con ubicación.' },
+  { id: 'nacional', label: 'OTBN · Ley 26.331', desc: 'Eje nacional: Ordenamiento Territorial de Bosques Nativos (Ley 26.331 de Presupuestos Mínimos de Bosques Nativos).', items: [
+    { rule: 'Sin desmonte de bosque nativo en categorías I (rojo) y II (amarillo)', evidence: 'cambio de cobertura 2020–2026: 0 ha', status: 'ok' },
+    { rule: 'Sin intervención en zonas protegidas del OTBN', evidence: 'superposición 0 ha con capa OTBN (Lotes 1–3)', status: 'ok' },
+    { rule: 'Lotes nuevos verificados contra la capa OTBN', evidence: 'Lote 4 sin analizar; linda con monte nativo', status: 'warn', fix: 'analizar el Lote 4 y verificar su superposición con bosque nativo.' },
+  ] },
+  { id: 'cordoba', label: 'Ley Agroforestal + BPA Córdoba', desc: 'Eje provincial: Ley Agroforestal de Córdoba (cobertura forestal mínima por predio) y Buenas Prácticas Agropecuarias (BPA).', items: [
+    { rule: 'Cobertura forestal mínima del predio según Ley Agroforestal (2–5% según zona)', evidence: 'cobertura nativa 3,1% del Lote 3; mínimo de la zona 5%', status: 'bad', fix: 'implantar corredores A, B y C (4,2 ha) con especies nativas.' },
+    { rule: 'Registro de aplicaciones fitosanitarias y distancias a zonas sensibles', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones con ubicación en "Registrar acción".' },
+    { rule: 'BPA: rotación de cultivos', evidence: 'maíz / soja / trigo en los últimos 3 ciclos', status: 'ok' },
+    { rule: 'BPA: cobertura de suelo entre campañas', evidence: 'NDVI invernal bajo (0,20) en el Lote 3', status: 'warn', fix: 'declarar cultivo de servicio o cobertura invernal.' },
+    { rule: 'BPA: gestión de envases vacíos de fitosanitarios', evidence: 'sin comprobantes de entrega a centro de acopio', status: 'warn', fix: 'cargar el comprobante de entrega de envases (triple lavado).' },
   ] },
 ];
 
@@ -143,3 +153,5 @@ export const tiposAccion = [
   { id: 'riego', label: 'Riego', f1: 'Fuente de agua', v1: 'Pozo 2', f2: 'Lámina', v2: '25 mm' },
   { id: 'cosecha', label: 'Cosecha', f1: 'Destino', v1: 'Acopio Río Seco', f2: 'Rinde', v2: '3.400 kg/ha' },
 ];
+
+export * from './plan';
