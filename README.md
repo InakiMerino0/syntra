@@ -24,24 +24,35 @@ Día 2: pitch por vertical → 8 finalistas → 4 ganadores (incubación UE 2027
 
 ## Qué es Synta
 
-Plataforma de trazabilidad que ayuda al productor agropecuario a validar su cumplimiento del marco regulatorio en 4 ejes:
+Synta acerca a los productores agropecuarios a la certificación que necesitan para exportar: les muestra qué les falta, les indica cómo cerrarlo con biodiversidad y les deja la evidencia lista para el certificador.
 
-1. Regulación provincial / zonal (ej. ordenamiento de bosque nativo de Córdoba)
-2. Regulación nacional (ej. Ley 26.331 de Bosques)
-3. Regulación internacional (ej. EUDR — reglamento UE de deforestación: geolocalización + no deforestación post 31/12/2020)
-4. Certificaciones nacionales e internacionales
+### Problema
 
-Flujo:
+Muchos productores no logran demostrar que cumplen los requisitos ambientales de los mercados de exportación, en especial los de biodiversidad. Esos requisitos además cambian según la certificadora. Resultado: pierden mercados y el proceso es tan complejo que el 90% necesita tercerizarlo.
 
-1. El productor dibuja polígonos de sus lotes en un mapa.
-2. Se obtienen datos satelitales públicos de esos lotes (rasters vía API: NDVI, cambio de cobertura, focos de calor).
-3. Se corre un análisis algorítmico de biodiversidad.
-4. Datos, análisis e hitos productivos se firman (hash anclado en blockchain) → historial inmutable y verificable.
-5. Se evalúa el cumplimiento contra los 4 ejes.
+### Solución
 
-> Pendiente: verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques antes del pitch.
+Una plataforma donde el productor:
 
-**Frase guía:** *Ayudamos a productores de Córdoba a demostrar que producen sin deforestar mediante datos satelitales firmados, para que accedan a mercados exigentes como la UE.*
+1. Dibuja sus lotes en un mapa.
+2. Obtiene un diagnóstico satelital de su campo (línea de base: NDVI, cambio de cobertura, focos de calor).
+3. Elige la certificación que busca y ve qué cumple y qué le falta (parámetros variables según el estándar).
+4. Recibe recomendaciones concretas para cerrar esas brechas, por ejemplo dónde y cuánta vegetación nativa sumar mediante corredores biológicos autosustentables.
+5. Registra cada dato e intervención firmado (hash anclado en blockchain) → evidencia verificable para el certificador o el comprador.
+
+Marcos que se pueden evaluar: regulación provincial (ordenamiento de bosque nativo de Córdoba), nacional (Ley 26.331 de Bosques), internacional (EUDR — geolocalización + no deforestación post 31/12/2020) y certificaciones nacionales e internacionales.
+
+### Diferencial
+
+Otras herramientas miden o reportan; Synta además te dice qué hacer en tu campo para certificar, con respaldo científico propio: la investigación del equipo en corredores biológicos funcionales y un caso real que lleva 10 años funcionando y accedió al mercado europeo. Y mejora el rinde: según estudios del equipo, soja +14%, maní +20%, girasol +30%; en ganadería la vegetación actúa como isla de enfriamiento ante el estrés calórico.
+
+### Visión
+
+Ser el puente entre el productor y la certificación para exportar: traducir lo que exige cada estándar en acciones concretas en el campo, acompañar el proceso y llevar al productor hasta la certificación.
+
+> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques; unificar nombre (Synta / SYNTRA).
+
+**Frase guía:** *Ayudamos a productores y agroexportadores a acceder a mercados internacionales mediante una plataforma que adapta sus parámetros a cada certificación y les indica cómo incorporar biodiversidad para cumplirla.*
 
 ## Prototipo (frontend)
 
@@ -55,8 +66,8 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
 4. **Procesamiento** — stepper animado: imágenes Sentinel-2 → índices → biodiversidad → hash → anclaje blockchain → listo.
 5. **Detalle del lote** — tabs:
    - *Satélite*: antes/después (2020 vs hoy) + serie temporal NDVI.
-   - *Biodiversidad*: score 0–100 desglosado (cobertura nativa, bordes/corredores, heterogeneidad) + recomendaciones accionables.
-   - *Cumplimiento*: checklist por eje/norma (cumple / no cumple / falta dato) con la evidencia.
+   - *Biodiversidad*: score 0–100 desglosado (cobertura nativa, bordes/corredores, heterogeneidad) + corredores sugeridos dibujados sobre el mapa + recomendaciones accionables.
+   - *Cumplimiento*: selector de certificación objetivo + checklist (cumple / no cumple / falta dato) con la evidencia y qué falta para cerrar cada brecha.
    - *Trazabilidad*: registros firmados del lote.
 6. **Explorador de trazabilidad / verificación** — timeline histórico (lote creado, satélite, análisis, siembra, insumos, cosecha) con hash, fecha, bloque y fuente; botón "Verificar"; vista pública por QR/link para compradores y certificadores.
 7. **Reporte / certificado exportable** — "Pasaporte de cumplimiento" imprimible/PDF con mapa, estado por eje, hashes y QR.
@@ -64,4 +75,4 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
 
 **Mínimo para la demo:** 3 → 4 → 5 → 6, con 2 como home. 7 y 8 si sobra tiempo.
 
-**Guion de demo:** dibujo un lote → certifico → veo biodiversidad y cumplimiento → muestro el QR que vería el comprador europeo.
+**Guion de demo:** dibujo un lote → elijo la certificación → veo qué me falta y los corredores recomendados → muestro el QR que vería el comprador europeo.
