@@ -4,7 +4,7 @@ import { Logo } from '@synta/ui';
 
 const STEPS = [
   { n: '01', title: 'Mapeá tus lotes', text: 'Dibujá los polígonos sobre imagen satelital.' },
-  { n: '02', title: 'Elegí tu certificación', text: 'RTRS, EUDR, ISCC: ves qué cumplís y qué te falta.' },
+  { n: '02', title: 'Elegí tu certificación', text: 'RTRS, EUDR, ISCC: ves qué cumplís y qué mejoras necesitás.' },
   { n: '03', title: 'Cerrá brechas con biodiversidad', text: 'Corredores biológicos recomendados y evidencia firmada para el certificador.' },
 ];
 
@@ -24,7 +24,7 @@ export default function Landing() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 620 }}>
           <h1 className="display" style={{ margin: 0, fontSize: 'clamp(34px, 5vw, 52px)', lineHeight: 1.05, letterSpacing: -1.5 }}>
-            Certificá para exportar. Te decimos qué falta y cómo cerrarlo.
+            Certificá para exportar. Identificamos las mejoras necesarias y cómo lograrlas.
           </h1>
           <p style={{ margin: 0, fontSize: 'clamp(17px, 2.2vw, 19px)', lineHeight: 1.55, color: '#C3D2C8' }}>
             Ayudamos a productores y agroexportadores a acceder a mercados internacionales: adaptamos los parámetros a cada certificación y te indicamos cómo incorporar biodiversidad para cumplirla.

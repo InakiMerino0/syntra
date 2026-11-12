@@ -1,7 +1,7 @@
 {
   "name": "Syntra — Certificá para exportar",
   "short_name": "Syntra",
-  "description": "Te decimos qué te falta para certificar y exportar, y cómo cerrarlo con biodiversidad.",
+  "description": "Identificamos las mejoras necesarias para certificar y exportar, y cómo lograrlas con biodiversidad.",
   "lang": "es-AR",
   "start_url": "/panel",
   "scope": "/",

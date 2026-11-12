@@ -52,7 +52,7 @@ export default function Panel() {
           <strong className="display" style={big}>{corredoresHa} ha</strong>
           <span style={subLight}>biodiversidad {bio.actual} → {bio.proyectado} · rinde {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
         </div>
-        <Link to="/lote/l3" className="btn btn-accent" style={{ minHeight: 48, fontSize: 15 }}>Ver qué me falta</Link>
+        <Link to="/lote/l3" className="btn btn-accent" style={{ minHeight: 48, fontSize: 15 }}>Ver mejoras necesarias</Link>
       </section>
 
       <section aria-labelledby="eco" className="card stack" style={{ gap: 12 }}>

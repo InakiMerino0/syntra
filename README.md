@@ -67,7 +67,7 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
 5. **Detalle del lote** — tabs:
    - *Satélite*: antes/después (2020 vs hoy) + serie temporal NDVI.
    - *Biodiversidad*: score 0–100 desglosado (cobertura nativa, bordes/corredores, heterogeneidad) + corredores sugeridos dibujados sobre el mapa + recomendaciones accionables.
-   - *Cumplimiento*: selector de certificación objetivo + checklist (cumple / no cumple / falta dato) con la evidencia y qué falta para cerrar cada brecha.
+   - *Cumplimiento*: selector de certificación objetivo + checklist (cumple / no cumple / falta dato) con la evidencia y las mejoras necesarias para cerrar cada brecha.
    - *Trazabilidad*: registros firmados del lote.
 6. **Explorador de trazabilidad / verificación** — timeline histórico (lote creado, satélite, análisis, siembra, insumos, cosecha) con hash, fecha, bloque y fuente; botón "Verificar"; vista pública por QR/link para compradores y certificadores.
 7. **Reporte / certificado exportable** — "Pasaporte de cumplimiento" imprimible/PDF con mapa, estado por eje, hashes y QR.

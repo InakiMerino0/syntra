@@ -70,7 +70,7 @@ export default function Procesando() {
             Registro anclado en el bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{block}</span>
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', width: '100%', maxWidth: 560 }}>
-            <Link to={`/lote/${lote.id}`} className="btn btn-accent" style={{ minHeight: 48, flex: '1 1 240px' }}>Ver qué me falta para certificar</Link>
+            <Link to={`/lote/${lote.id}`} className="btn btn-accent" style={{ minHeight: 48, flex: '1 1 240px' }}>Ver mejoras necesarias para certificar</Link>
             <button type="button" className="btn btn-ghost-dark" style={{ minHeight: 48, flex: '1 1 180px' }} onClick={() => setRun((r) => r + 1)}>Repetir animación</button>
           </div>
         </div>
