@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@geoman-io/leaflet-geoman-free": "2.17.0",
     "@synta/data": "workspace:*",
     "@synta/ui": "workspace:*",
     "leaflet": "1.9.4",

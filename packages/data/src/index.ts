@@ -65,9 +65,9 @@ export interface Lote {
 
 export const lotes: Lote[] = [
   { id: 'l1', name: 'Lote 1 — La Loma', crop: 'Maíz', ha: 96, bio: 71, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 3 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.495], [-30.110, -63.485], [-30.119, -63.485], [-30.119, -63.495]] },
-  { id: 'l2', name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, bio: 66, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 2 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.484], [-30.110, -63.476], [-30.118, -63.476], [-30.118, -63.484]] },
-  { id: 'l3', name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, status: 'Con brechas', tone: 'warn', note: 'Limita con bosque nativo al este. 2 brechas de biodiversidad para RTRS.', polygon: [[-30.121, -63.495], [-30.121, -63.485], [-30.130, -63.484], [-30.131, -63.494]] },
-  { id: 'l4', name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, bio: 74, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo. Revisar superposición con zona de bosque protegido.', polygon: [[-30.121, -63.484], [-30.121, -63.477], [-30.129, -63.476], [-30.130, -63.483]] },
+  { id: 'l2', name: 'Lote 2 — El Molino', crop: 'Soja', ha: 74, bio: 66, status: 'Certificado', tone: 'ok', note: 'Último análisis hace 2 días. Sin cambios de cobertura desde 2020.', polygon: [[-30.110, -63.484], [-30.110, -63.476], [-30.1186, -63.476], [-30.1186, -63.484]] },
+  { id: 'l3', name: 'Lote 3 — El Bajo', crop: 'Soja', ha: 86, bio: 64, status: 'Con brechas', tone: 'warn', note: 'Limita con bosque nativo al este. 2 brechas de biodiversidad para RTRS.', polygon: [[-30.121, -63.495], [-30.121, -63.485], [-30.1285, -63.484], [-30.1295, -63.494]] },
+  { id: 'l4', name: 'Lote 4 — Monte Norte', crop: 'Trigo', ha: 56, bio: 74, status: 'Sin analizar', tone: 'bad', note: 'Lote nuevo. Revisar superposición con zona de bosque protegido.', polygon: [[-30.121, -63.484], [-30.121, -63.477], [-30.128, -63.476], [-30.129, -63.483]] },
 ];
 
 export const capas = {
@@ -135,7 +135,7 @@ export interface Corredor { id: string; title: string; ha: number; impact: numbe
 
 export const corredores: Corredor[] = [
   { id: 'A', title: 'A · Corredor borde norte', ha: 1.2, impact: 6, body: 'Franja de 10 m × 1.200 m con especies nativas autosustentables.', closes: 'Cierra: vegetación nativa (RTRS)', status: 'Implantado', line: [[-30.1215, -63.4945], [-30.1215, -63.4852]] },
-  { id: 'B', title: 'B · Corredor central N–S', ha: 1.8, impact: 5, body: 'Franja que conecta el borde norte con el monte del este.', closes: 'Cierra: protección de biodiversidad (ISCC)', status: 'Planificado', line: [[-30.1215, -63.4900], [-30.1300, -63.4890], [-30.1290, -63.4760]] },
+  { id: 'B', title: 'B · Corredor central N–S', ha: 1.8, impact: 5, body: 'Franja que conecta el borde norte con el monte del este.', closes: 'Cierra: protección de biodiversidad (ISCC)', status: 'Planificado', line: [[-30.1215, -63.4900], [-30.1288, -63.4890], [-30.1280, -63.4760]] },
   { id: 'C', title: 'C · Isla de vegetación en el bajo', ha: 1.2, impact: 3, body: 'En la zona de menor rinde histórico (NDVI bajo) del lote.', closes: 'Suma al plan de biodiversidad (RTRS)', status: 'Planificado', line: [[-30.1270, -63.4930], [-30.1280, -63.4915]] },
 ];
 

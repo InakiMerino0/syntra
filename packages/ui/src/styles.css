@@ -174,7 +174,7 @@ table.table td { padding: 12px 8px; border-bottom: 1px solid var(--line-soft); }
 }
 .mapa-head { grid-area: head; display: flex; flex-direction: column; gap: 4px; padding: 24px 20px 16px; background: var(--surface); border-right: 1px solid var(--line); }
 .mapa-list { grid-area: list; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding: 0 20px 24px; background: var(--surface); border-right: 1px solid var(--line); }
-.mapa-map { grid-area: map; position: relative; min-width: 0; min-height: 420px; }
+.mapa-map { grid-area: map; position: relative; min-width: 0; min-height: 420px; scroll-margin-top: var(--content-top, 0px); }
 .mapa-tools { top: 16px; left: 56px; }
 .mapa-capas-toggle { display: none; }
 .mapa-capas { top: 16px; right: 16px; min-width: 210px; display: flex; flex-direction: column; gap: 6px; }
@@ -219,4 +219,19 @@ table.table td { padding: 12px 8px; border-bottom: 1px solid var(--line-soft); }
   .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { white-space: nowrap; flex: 0 0 auto; padding: 0 14px; }
+}
+
+/* Mapa: editor de polígonos táctil */
+.vtx { background: transparent; border: 0; touch-action: none; }
+.vtx span { position: absolute; inset: 11px; border-radius: 50%; background: #fff; border: 3px solid var(--primary); box-shadow: 0 1px 6px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.vtx-first span { inset: 8px; background: var(--corridor); border-color: var(--dark); }
+.vtx-sel span { inset: 8px; background: var(--primary); border-color: #fff; }
+.vtx-mid span { inset: 13px; background: rgba(255,255,255,0.85); border: 2px solid var(--primary); color: var(--primary); font: 700 13px/1 var(--font); }
+.mapa-drawing { cursor: crosshair; }
+.btn-danger { background: var(--bad-bar); color: #fff; }
+.btn-danger:hover { background: var(--bad-fg); color: #fff; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 800px) {
+  .mapa-editbar .mapa-sel-actions { flex-wrap: wrap; }
+  .mapa-editbar .mapa-sel-actions > .btn { flex: 1 1 28%; }
 }
