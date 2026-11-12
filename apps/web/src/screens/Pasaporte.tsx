@@ -4,7 +4,7 @@ import { biodiversidadLote3, corredores, establecimiento, lotes } from '@synta/d
 import HashTodo from '../components/HashTodo';
 import './pasaporte/pasaporte.css';
 
-const URL_VERIFICACION = 'https://synta.app/v/184';
+const URL_VERIFICACION = 'https://syntra.app/v/184';
 const NUMERO = 'SYN-2026-000184';
 const EMITIDO = '12/11/2026';
 
@@ -61,7 +61,7 @@ export default function Pasaporte() {
           <div className="stack" style={{ gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Logo size={24} color="var(--primary)" />
-              <span className="display" style={{ fontWeight: 700 }}>Synta</span>
+              <span className="display" style={{ fontWeight: 700 }}>Syntra</span>
             </div>
             <h1 id="pasaporte-titulo" className="page-title">Pasaporte de cumplimiento</h1>
             <span className="muted" style={{ fontSize: 14 }}>{establecimiento.name} · {establecimiento.location}, Argentina</span>
@@ -69,7 +69,7 @@ export default function Pasaporte() {
           </div>
           <div className="stack" style={{ alignItems: 'center', gap: 6 }}>
             <FakeQR cell={5} label="Código QR ilustrativo de verificación" />
-            <span className="muted" style={{ fontSize: 11 }}>Verificar en synta.app/v/184</span>
+            <span className="muted" style={{ fontSize: 11 }}>Verificar en syntra.app/v/184</span>
           </div>
         </header>
 
@@ -136,7 +136,7 @@ export default function Pasaporte() {
             <li>Este pasaporte — {hash ?? 'calculando…'}</li>
           </ul>
           <div className="pasaporte-hashall">
-            <p>¿Querés una sola huella de todo lo que Synta tiene del establecimiento? Hasheamos cada conjunto de datos y los combinamos en una huella raíz.</p>
+            <p>¿Querés una sola huella de todo lo que Syntra tiene del establecimiento? Hasheamos cada conjunto de datos y los combinamos en una huella raíz.</p>
             <HashTodo variant="primary" />
           </div>
           <p style={{ fontSize: 12 }}>Red: Polygon Amoy (testnet). Fuentes: Copernicus Sentinel-2 L2A, NASA FIRMS, capa OTBN (Ley 26.331), declaraciones del productor. Este documento es un prototipo y no constituye una certificación oficial.</p>

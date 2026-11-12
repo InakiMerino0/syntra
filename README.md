@@ -22,9 +22,9 @@ Jurado de 12 personas (3 por vertical), cada criterio de 1 a 5:
 
 Día 2: pitch por vertical → 8 finalistas → 4 ganadores (incubación UE 2027).
 
-## Qué es Synta
+## Qué es Syntra
 
-Synta acerca a los productores agropecuarios a la certificación que necesitan para exportar: les muestra qué les falta, les indica cómo cerrarlo con biodiversidad y les deja la evidencia lista para el certificador.
+Syntra acerca a los productores agropecuarios a la certificación que necesitan para exportar: les muestra qué les falta, les indica cómo cerrarlo con biodiversidad y les deja la evidencia lista para el certificador.
 
 ### Problema
 
@@ -44,13 +44,13 @@ Marcos que se pueden evaluar: regulación provincial (ordenamiento de bosque nat
 
 ### Diferencial
 
-Otras herramientas miden o reportan; Synta además te dice qué hacer en tu campo para certificar, con respaldo científico propio: la investigación del equipo en corredores biológicos funcionales y un caso real que lleva 10 años funcionando y accedió al mercado europeo. Y mejora el rinde: según estudios del equipo, soja +14%, maní +20%, girasol +30%; en ganadería la vegetación actúa como isla de enfriamiento ante el estrés calórico.
+Otras herramientas miden o reportan; Syntra además te dice qué hacer en tu campo para certificar, con respaldo científico propio: la investigación del equipo en corredores biológicos funcionales y un caso real que lleva 10 años funcionando y accedió al mercado europeo. Y mejora el rinde: según estudios del equipo, soja +14%, maní +20%, girasol +30%; en ganadería la vegetación actúa como isla de enfriamiento ante el estrés calórico.
 
 ### Visión
 
 Ser el puente entre el productor y la certificación para exportar: traducir lo que exige cada estándar en acciones concretas en el campo, acompañar el proceso y llevar al productor hasta la certificación.
 
-> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques; unificar nombre (Synta / SYNTRA).
+> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques.
 
 **Frase guía:** *Ayudamos a productores y agroexportadores a acceder a mercados internacionales mediante una plataforma que adapta sus parámetros a cada certificación y les indica cómo incorporar biodiversidad para cumplirla.*
 

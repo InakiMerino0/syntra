@@ -64,7 +64,7 @@ export const certificaciones: Certificacion[] = [
     { rule: 'Sin conversión de ecosistemas naturales', evidence: 'cambio de cobertura firmado 0x5a07…', status: 'ok' },
     { rule: 'Geolocalización de los lotes', evidence: 'polígono firmado 0x44c0…', status: 'ok' },
     { rule: 'Áreas de vegetación nativa mantenidas o restauradas', evidence: 'cobertura nativa 3,1% del lote', status: 'bad', fix: 'implantar 4,2 ha de corredores (A, B y C).' },
-    { rule: 'Plan de manejo de biodiversidad', evidence: 'no hay plan cargado', status: 'bad', fix: 'Synta lo genera a partir del diagnóstico y los corredores elegidos.' },
+    { rule: 'Plan de manejo de biodiversidad', evidence: 'no hay plan cargado', status: 'bad', fix: 'Syntra lo genera a partir del diagnóstico y los corredores elegidos.' },
     { rule: 'Buenas prácticas de aplicación de fitosanitarios', evidence: 'sin registros de aplicación', status: 'warn', fix: 'registrar las aplicaciones en "Registrar acción".' },
   ] },
   { id: 'eudr', label: 'EUDR (Unión Europea)', desc: 'Reglamento europeo de deforestación: geolocalización, no deforestación posterior al 31/12/2020 y legalidad.', items: [
@@ -118,8 +118,8 @@ export interface Evento { id: number; kind: EventKind; title: string; lote: stri
 
 export const eventos: Evento[] = [
   { id: 8, kind: 'prod', title: 'Corredor A implantado · 1,2 ha de nativas', lote: 'Lote 3', date: '12/11/2026 16:05', source: 'Productor + foto georreferenciada', hash: '0x0c5f2b…d1a930', block: '#58.216.441' },
-  { id: 9, kind: 'bio', title: 'Plan de corredores propuesto · 4,2 ha (RTRS)', lote: 'Lote 3', date: '12/11/2026 14:33', source: 'Synta · algoritmo v0.3', hash: '0x3be14c…a077d0', block: '#58.214.908' },
-  { id: 1, kind: 'bio', title: 'Análisis de biodiversidad 64/100', lote: 'Lote 3', date: '12/11/2026 14:32', source: 'Synta · algoritmo v0.3', hash: '0x91bd5e…f204aa', block: '#58.214.907' },
+  { id: 9, kind: 'bio', title: 'Plan de corredores propuesto · 4,2 ha (RTRS)', lote: 'Lote 3', date: '12/11/2026 14:33', source: 'Syntra · algoritmo v0.3', hash: '0x3be14c…a077d0', block: '#58.214.908' },
+  { id: 1, kind: 'bio', title: 'Análisis de biodiversidad 64/100', lote: 'Lote 3', date: '12/11/2026 14:32', source: 'Syntra · algoritmo v0.3', hash: '0x91bd5e…f204aa', block: '#58.214.907' },
   { id: 2, kind: 'sat', title: 'NDVI medio 0,70', lote: 'Lote 3', date: '12/11/2026 14:31', source: 'Sentinel-2 L2A (Copernicus)', hash: '0x7f3a02…98c21e', block: '#58.214.906' },
   { id: 3, kind: 'sat', title: 'Cambio de cobertura 2020 → 2026: 0 ha', lote: 'Lote 3', date: '12/11/2026 14:31', source: 'Sentinel-2 L2A (Copernicus)', hash: '0x5a07c1…b0e3d1', block: '#58.214.906' },
   { id: 4, kind: 'sat', title: 'Sin focos de calor en el lote', lote: 'Lote 3', date: '12/11/2026 14:30', source: 'NASA FIRMS', hash: '0xe1f49a…3d72b5', block: '#58.214.905' },

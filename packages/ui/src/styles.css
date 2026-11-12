@@ -1,4 +1,4 @@
-/* Synta design tokens + shared primitives. Screens should use these classes instead of re-inventing them. */
+/* Syntra design tokens + shared primitives. Screens should use these classes instead of re-inventing them. */
 :root {
   --bg: #f5f6f1;
   --surface: #ffffff;

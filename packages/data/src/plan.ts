@@ -131,9 +131,9 @@ export function generarPlan(certId: string): Plan {
       continue;
     }
 
-    // R2 — missing biodiversity management plan → Synta drafts it from the diagnosis.
+    // R2 — missing biodiversity management plan → Syntra drafts it from the diagnosis.
     if (/plan de manejo/i.test(rule)) {
-      regla('R2', 'Falta el plan de manejo de biodiversidad', 'aprobar el borrador que genera Synta con el diagnóstico');
+      regla('R2', 'Falta el plan de manejo de biodiversidad', 'aprobar el borrador que genera Syntra con el diagnóstico');
       add({
         titulo: 'Revisar y aprobar el plan de manejo de biodiversidad',
         detalle: `Borrador generado con el diagnóstico (${biodiversidadLote3.actual}/100) y los corredores elegidos. Lo firmás y queda anclado.`,
@@ -162,7 +162,7 @@ export function generarPlan(certId: string): Plan {
       regla('R3', 'No hay registros de aplicaciones fitosanitarias en la trazabilidad', 'registrar cada aplicación con ubicación y producto');
       add({
         titulo: 'Registrar las aplicaciones fitosanitarias de la campaña',
-        detalle: 'Producto, dosis, fecha y ubicación de cada aplicación. Synta calcula la distancia a monte y zonas sensibles.',
+        detalle: 'Producto, dosis, fecha y ubicación de cada aplicación. Syntra calcula la distancia a monte y zonas sensibles.',
         lote: alcance.map(short).join(', '), requisito: rule, prioridad: req.status === 'bad' ? 'alta' : 'media', plazo: 'Esta semana',
         esfuerzo: '10 min por aplicación', impacto: 'completa dato', tipo: 'fito',
         porQue: `Requisito "Falta dato" y ${hayFito ? 'hay' : '0'} registros de "${tipoLabel('fito')}" en la trazabilidad. Sin ellos el auditor no puede verificar distancias.`,
@@ -270,12 +270,12 @@ export function generarPlan(certId: string): Plan {
 
   const prodRegs = eventos.filter((e) => e.kind === 'prod');
   const datos: DatoPlan[] = [
-    { label: 'Certificación objetivo', valor: `${cert.label} · ${cert.items.length} requisitos`, fuente: 'Catálogo Synta (ilustrativo)' },
+    { label: 'Certificación objetivo', valor: `${cert.label} · ${cert.items.length} requisitos`, fuente: 'Catálogo Syntra (ilustrativo)' },
     { label: 'Estado de los requisitos', valor: `${ok} cumplen · ${bad} brechas · ${warn} faltan dato`, fuente: 'Diagnóstico de hoy 14:32' },
     { label: 'Lotes en alcance', valor: `${alcance.map(short).join(', ')} (${alcance.reduce((s, l) => s + l.ha, 0)} ha)`, fuente: cert.id === 'rtrs' ? 'Solo lotes de soja' : 'Polígonos firmados' },
     { label: 'Lotes sin analizar', valor: sinAnalizar.length ? sinAnalizar.map((l) => `${short(l)} (${l.ha} ha)`).join(', ') : 'Ninguno', fuente: 'Mapa y lotes' },
     { label: 'Lotes linderos a monte nativo', valor: linderos.map(short).join(', ') || 'Ninguno', fuente: `Capa de bosque nativo (${capas.bosqueNativo.length} vértices)` },
-    { label: `Biodiversidad ${short(lote3)}`, valor: `${biodiversidadLote3.actual}/100`, fuente: 'Synta · algoritmo v0.3' },
+    { label: `Biodiversidad ${short(lote3)}`, valor: `${biodiversidadLote3.actual}/100`, fuente: 'Syntra · algoritmo v0.3' },
     { label: 'Corredores', valor: corredores.map((c) => `${c.id} ${c.status.toLowerCase()}`).join(' · '), fuente: 'Plan de corredores 12/11/2026' },
     { label: 'NDVI última campaña', valor: `mín. ${fmt(ndviMin, 2)} · máx. ${fmt(ndviMax, 2)}`, fuente: 'Sentinel-2 L2A' },
     { label: 'Registros de campo', valor: `${prodRegs.length} intervenciones · fitosanitarios ${hayFito ? '✓' : '0'} · fertilización ${hayFert ? '✓' : '0'} · cosecha ${hayCosecha ? '✓' : '0'}`, fuente: 'Trazabilidad (blockchain)' },

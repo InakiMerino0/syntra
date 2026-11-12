@@ -20,7 +20,7 @@ export default function Landing() {
       <section style={{ flex: '1 1 520px', minWidth: 0, background: 'var(--dark)', color: 'var(--dark-ink)', padding: 'clamp(32px, 5vw, 56px) clamp(16px, 5vw, 64px)', paddingTop: 'max(clamp(32px, 5vw, 56px), calc(env(safe-area-inset-top, 0px) + 16px))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 'clamp(32px, 6vw, 48px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Logo size={36} />
-          <span className="display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>Synta</span>
+          <span className="display" style={{ fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>Syntra</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 620 }}>
           <h1 className="display" style={{ margin: 0, fontSize: 'clamp(34px, 5vw, 52px)', lineHeight: 1.05, letterSpacing: -1.5 }}>

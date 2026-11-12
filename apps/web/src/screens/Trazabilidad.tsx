@@ -4,7 +4,7 @@ import { FakeQR, sha256, shortHash } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
 import { eventos, eventKinds, type EventKind, type Evento } from '@synta/data';
 
-const PUBLIC_URL = 'https://synta.app/v/184';
+const PUBLIC_URL = 'https://syntra.app/v/184';
 const resumen = [
   ['Productor', 'La Esperanza (Córdoba)'],
   ['Lotes verificados', '3 de 4 · 256 ha'],

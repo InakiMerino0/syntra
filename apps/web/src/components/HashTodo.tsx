@@ -179,7 +179,7 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
           </section>
 
           <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.45 }}>
-            En la cadena solo queda la huella; los datos quedan en Synta. Si alguien cambia un solo dato, la huella raíz deja de coincidir.
+            En la cadena solo queda la huella; los datos quedan en Syntra. Si alguien cambia un solo dato, la huella raíz deja de coincidir.
           </p>
 
           <div className="hashtodo-actions">

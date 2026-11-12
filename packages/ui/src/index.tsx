@@ -34,7 +34,7 @@ export function Sidebar({ open = false, onClose, onDismiss }: { open?: boolean; 
   return (
     <nav id={NAV_ID} aria-label="Principal" className="sidebar" data-open={open}>
       <div className="sidebar-head">
-        <NavLink to="/panel" className="sidebar-logo" onClick={onClose}><Logo />Synta</NavLink>
+        <NavLink to="/panel" className="sidebar-logo" onClick={onClose}><Logo />Syntra</NavLink>
         <button ref={closeRef} type="button" className="sidebar-close" aria-label="Cerrar menú" onClick={onDismiss ?? onClose}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
         </button>
@@ -90,7 +90,7 @@ export function AppLayout() {
         <button ref={menuRef} type="button" className="topbar-menu" aria-label="Abrir menú" aria-expanded={open} aria-controls={NAV_ID} onClick={() => setOpen(true)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7 H20 M4 12 H20 M4 17 H20" /></svg>
         </button>
-        <NavLink to="/panel" className="topbar-logo"><Logo size={24} />Synta</NavLink>
+        <NavLink to="/panel" className="topbar-logo"><Logo size={24} />Syntra</NavLink>
       </header>
       <div className="drawer-backdrop" data-open={open} aria-hidden="true" onClick={() => close(true)} />
       <Sidebar open={open} onClose={() => close(false)} onDismiss={() => close(true)} />
