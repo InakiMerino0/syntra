@@ -1,7 +1,7 @@
 // "Plan de acción productivo" — deterministic MOCK of the recommendation algorithm (v0.3, simulated).
 // Given a target certification + the establishment data, it decides which field actions close each gap.
 // Rules are intentionally simple and data-driven so the demo shows *why* each action was chosen.
-import { biodiversidadLote3, capas, certificaciones, corredores, establecimiento, eventos, lotes, ndviSerie, tiposAccion } from './index';
+import { biodiversidadLote3, capas, certificaciones, corredores, ecorregion, establecimiento, eventos, lotes, monitoreos, ndviSerie, tiposAccion } from './index';
 import type { Certificacion, Corredor, Lote, Requisito } from './index';
 
 export type Prioridad = 'alta' | 'media' | 'baja';
@@ -85,6 +85,8 @@ export function generarPlan(certId: string): Plan {
   const hayFert = regs('fertiliz').length > 0;
   const haySiembra = regs('siembra').length > 0;
   const hayCosecha = regs('cosecha').length > 0;
+  const espNativas = [0, 1, 3].map((i) => ecorregion.especies[i].nombre.toLowerCase());
+  const espTexto = `${espNativas.slice(0, -1).join(', ')} y ${espNativas[espNativas.length - 1]} (${ecorregion.nombre})`;
   const ultimaCampania = ndviSerie.slice(-8);
   const ndviMin = Math.min(...ultimaCampania);
   const ndviMax = Math.max(...ultimaCampania);
@@ -115,7 +117,7 @@ export function generarPlan(certId: string): Plan {
         const enBajo = /NDVI bajo|menor rinde/i.test(c.body);
         add({
           titulo: `Implantar ${c.title}`,
-          detalle: `${c.body} ${fmt(c.ha)} ha con especies nativas.`,
+          detalle: `${c.body} ${fmt(c.ha)} ha con ${espTexto}.`,
           lote: short(lote3),
           requisito: rule,
           prioridad: 'alta',
@@ -258,6 +260,22 @@ export function generarPlan(certId: string): Plan {
     });
   }
 
+  // X3 — field monitoring data available → monitor each campaign: evidence that biodiversity is functional.
+  const fechaMon = monitoreos[monitoreos.length - 1]?.fecha;
+  const ultMon = monitoreos.filter((m) => m.fecha === fechaMon);
+  const borde = ultMon.find((m) => /borde/i.test(m.sitio));
+  const centro = ultMon.find((m) => /centro/i.test(m.sitio));
+  if (borde && centro) {
+    regla('X3', 'Hay datos de monitoreo de campo (borde vs. centro del lote)', 'repetir el monitoreo cada campaña como evidencia de biodiversidad funcional');
+    add({
+      titulo: 'Monitoreo de biodiversidad de campo',
+      detalle: 'Conteo de 15 minutos en el borde del corredor y en el centro del lote, con fotos georreferenciadas. Es la evidencia de que la biodiversidad es funcional: polinizadores y enemigos naturales.',
+      lote: short(lote3), requisito: null, prioridad: 'media', plazo: 'Durante la campaña',
+      esfuerzo: '30 min por campaña', impacto: 'evidencia funcional', tipo: 'monitoreo',
+      porQue: `Último monitoreo (${fechaMon}): polinizadores ${borde.polinizadores} en el borde vs ${centro.polinizadores} en el centro. Repetirlo cada campaña muestra que el corredor funciona y no solo está implantado.`,
+    });
+  }
+
   acciones.sort((a, b) => plazos.indexOf(a.plazo) - plazos.indexOf(b.plazo) || ORDEN_PRIORIDAD[a.prioridad] - ORDEN_PRIORIDAD[b.prioridad]);
 
   const cubiertos = new Set(acciones.map((a) => a.requisito).filter(Boolean));
@@ -277,6 +295,8 @@ export function generarPlan(certId: string): Plan {
     { label: 'Lotes linderos a monte nativo', valor: linderos.map(short).join(', ') || 'Ninguno', fuente: `Capa de bosque nativo (${capas.bosqueNativo.length} vértices)` },
     { label: `Biodiversidad ${short(lote3)}`, valor: `${biodiversidadLote3.actual}/100`, fuente: 'Syntra · algoritmo v0.3' },
     { label: 'Corredores', valor: corredores.map((c) => `${c.id} ${c.status.toLowerCase()}`).join(' · '), fuente: 'Plan de corredores 12/11/2026' },
+    { label: 'Ecorregión', valor: ecorregion.nombre, fuente: ecorregion.fuenteDatos },
+    ...(borde && centro ? [{ label: `Monitoreo de campo (${fechaMon})`, valor: `Polinizadores borde vs centro: ${borde.polinizadores} vs ${centro.polinizadores} · enemigos naturales ${borde.enemigosNaturales} vs ${centro.enemigosNaturales}`, fuente: 'Monitoreo de campo + satélite' }] : []),
     { label: 'NDVI última campaña', valor: `mín. ${fmt(ndviMin, 2)} · máx. ${fmt(ndviMax, 2)}`, fuente: 'Sentinel-2 L2A' },
     { label: 'Registros de campo', valor: `${prodRegs.length} intervenciones · fitosanitarios ${hayFito ? '✓' : '0'} · fertilización ${hayFert ? '✓' : '0'} · cosecha ${hayCosecha ? '✓' : '0'}`, fuente: 'Trazabilidad (blockchain)' },
     { label: 'Focos de calor', valor: `${capas.focosCalor.length} en el monte lindero, 0 en lotes`, fuente: 'NASA FIRMS' },

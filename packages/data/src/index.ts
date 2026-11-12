@@ -11,6 +11,46 @@ export const establecimiento = {
   biodiversity: 68,
 };
 
+/** Ecoregion drives which native species and corridor designs the algorithm recommends. Verify before the pitch. */
+export const ecorregion = {
+  nombre: 'Chaco Seco',
+  descripcion: 'Bosque xerófilo del norte de Córdoba: quebrachales y algarrobales con estación seca marcada.',
+  fuenteDatos: 'Capa de ecorregiones (APN) · OTBN Córdoba · Sentinel-2',
+  especies: [
+    { nombre: 'Algarrobo blanco', cientifico: 'Prosopis alba', rol: 'Estrato arbóreo · sombra para ganado' },
+    { nombre: 'Quebracho blanco', cientifico: 'Aspidosperma quebracho-blanco', rol: 'Estrato arbóreo · estructura del corredor' },
+    { nombre: 'Mistol', cientifico: 'Sarcomphalus mistol', rol: 'Fruto para fauna · polinizadores' },
+    { nombre: 'Chañar', cientifico: 'Geoffroea decorticans', rol: 'Rebrota de raíz · autosiembra rápida' },
+    { nombre: 'Tala', cientifico: 'Celtis ehrenbergiana', rol: 'Refugio de aves y enemigos naturales' },
+  ],
+};
+
+/** Field biodiversity monitoring (pan traps / visual counts), Lote 3. Corridor edge vs. lot center. */
+export interface Monitoreo { fecha: string; sitio: string; polinizadores: number; enemigosNaturales: number; riqueza: number }
+export const monitoreos: Monitoreo[] = [
+  { fecha: '15/09/2026', sitio: 'Centro del lote (sin corredor)', polinizadores: 9, enemigosNaturales: 4, riqueza: 6 },
+  { fecha: '15/09/2026', sitio: 'Borde con monte nativo', polinizadores: 31, enemigosNaturales: 14, riqueza: 17 },
+  { fecha: '12/11/2026', sitio: 'Centro del lote (sin corredor)', polinizadores: 11, enemigosNaturales: 5, riqueza: 7 },
+  { fecha: '12/11/2026', sitio: 'Borde con monte nativo', polinizadores: 34, enemigosNaturales: 12, riqueza: 18 },
+];
+
+/** Long-term follow-up: a corridor proves it is functional and lasting only if it survives and self-seeds. */
+export interface Seguimiento { id: string; titulo: string; implantado: string; nota: string; serie: { anio: number; ndvi: number; supervivencia: number; renuevos: number }[] }
+export const seguimientoCorredores: Seguimiento[] = [
+  { id: 'ref', titulo: 'Corredor de referencia · caso del equipo', implantado: '2016', nota: 'Corredor funcional autorreplicable implantado hace 10 años en una empresa agroexportadora (caso real, datos ilustrativos).', serie: [
+    { anio: 2016, ndvi: 0.31, supervivencia: 100, renuevos: 0 },
+    { anio: 2018, ndvi: 0.44, supervivencia: 91, renuevos: 120 },
+    { anio: 2020, ndvi: 0.56, supervivencia: 88, renuevos: 410 },
+    { anio: 2022, ndvi: 0.63, supervivencia: 87, renuevos: 780 },
+    { anio: 2024, ndvi: 0.68, supervivencia: 87, renuevos: 1150 },
+    { anio: 2026, ndvi: 0.71, supervivencia: 86, renuevos: 1420 },
+  ] },
+  { id: 'A', titulo: 'A · Corredor borde norte (Lote 3)', implantado: '12/11/2026', nota: 'Recién implantado: Syntra lo sigue por satélite cada 5 días y con monitoreo de campo cada campaña.', serie: [
+    { anio: 2026, ndvi: 0.29, supervivencia: 100, renuevos: 0 },
+  ] },
+];
+
+
 export interface Lote {
   id: string;
   name: string;
@@ -117,6 +157,7 @@ export type EventKind = 'sat' | 'bio' | 'prod' | 'lote';
 export interface Evento { id: number; kind: EventKind; title: string; lote: string; date: string; source: string; hash: string; block: string }
 
 export const eventos: Evento[] = [
+  { id: 10, kind: 'bio', title: 'Monitoreo de campo · 34 polinizadores y 12 enemigos naturales en el borde', lote: 'Lote 3', date: '12/11/2026 17:20', source: 'Técnico de campo + fotos georreferenciadas', hash: '0x8d21e7…4b90c2', block: '#58.217.006' },
   { id: 8, kind: 'prod', title: 'Corredor A implantado · 1,2 ha de nativas', lote: 'Lote 3', date: '12/11/2026 16:05', source: 'Productor + foto georreferenciada', hash: '0x0c5f2b…d1a930', block: '#58.216.441' },
   { id: 9, kind: 'bio', title: 'Plan de corredores propuesto · 4,2 ha (RTRS)', lote: 'Lote 3', date: '12/11/2026 14:33', source: 'Syntra · algoritmo v0.3', hash: '0x3be14c…a077d0', block: '#58.214.908' },
   { id: 1, kind: 'bio', title: 'Análisis de biodiversidad 64/100', lote: 'Lote 3', date: '12/11/2026 14:32', source: 'Syntra · algoritmo v0.3', hash: '0x91bd5e…f204aa', block: '#58.214.907' },
@@ -152,6 +193,7 @@ export const tiposAccion = [
   { id: 'fito', label: 'Aplicación fitosanitaria', f1: 'Producto', v1: 'Glifosato 66,2%', f2: 'Dosis', v2: '1,5 l/ha' },
   { id: 'riego', label: 'Riego', f1: 'Fuente de agua', v1: 'Pozo 2', f2: 'Lámina', v2: '25 mm' },
   { id: 'cosecha', label: 'Cosecha', f1: 'Destino', v1: 'Acopio Río Seco', f2: 'Rinde', v2: '3.400 kg/ha' },
+  { id: 'monitoreo', label: 'Monitoreo de biodiversidad', f1: 'Polinizadores (individuos / 15 min)', v1: '34', f2: 'Enemigos naturales (individuos)', v2: '12' },
 ];
 
 export * from './plan';

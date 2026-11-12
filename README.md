@@ -50,7 +50,7 @@ Otras herramientas miden o reportan; Syntra además te dice qué hacer en tu cam
 
 Ser el puente entre el productor y la certificación para exportar: traducir lo que exige cada estándar en acciones concretas en el campo, acompañar el proceso y llevar al productor hasta la certificación.
 
-> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques.
+> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques; confirmar ecorregión (Chaco Seco) y especies nativas recomendadas para Río Seco; rango de cobertura forestal mínima de la Ley Agroforestal (2–5%).
 
 **Frase guía:** *Ayudamos a productores y agroexportadores a acceder a mercados internacionales mediante una plataforma que adapta sus parámetros a cada certificación y les indica cómo incorporar biodiversidad para cumplirla.*
 

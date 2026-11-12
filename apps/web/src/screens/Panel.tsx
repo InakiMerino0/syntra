@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Badge, ProgressBar } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
-import { establecimiento, kpis, ejes, lotes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
+import { ecorregion, establecimiento, kpis, ejes, lotes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
 
 const rtrs = certificaciones.find((c) => c.id === 'rtrs')!;
 const count = (s: string) => rtrs.items.filter((i) => i.status === s).length;
@@ -19,7 +19,7 @@ export default function Panel() {
     <div className="page">
       <header className="page-header">
         <div className="stack" style={{ gap: 6 }}>
-          <span className="muted" style={{ fontSize: 13 }}>{establecimiento.location} · RENSPA {establecimiento.renspa}</span>
+          <span className="muted" style={{ fontSize: 13 }}>{establecimiento.location} · RENSPA {establecimiento.renspa} · Ecorregión {ecorregion.nombre}</span>
           <h1 className="page-title">{establecimiento.name}</h1>
         </div>
         <div className="row" style={{ gap: 10, alignItems: 'center' }}>
@@ -53,6 +53,18 @@ export default function Panel() {
           <span style={subLight}>biodiversidad {bio.actual} → {bio.proyectado} · rinde {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
         </div>
         <Link to="/lote/l3" className="btn btn-accent" style={{ minHeight: 48, fontSize: 15 }}>Ver qué me falta</Link>
+      </section>
+
+      <section aria-labelledby="eco" className="card stack" style={{ gap: 12 }}>
+        <h2 id="eco" className="section-title">Ecorregión {ecorregion.nombre}</h2>
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+          Ubicamos tu campo en su ecorregión y traemos los datos disponibles ({ecorregion.fuenteDatos}). {ecorregion.descripcion} Las especies y el diseño de los corredores se adaptan a ella.
+        </p>
+        <ul aria-label="Especies nativas recomendadas" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {ecorregion.especies.slice(0, 5).map((s) => (
+            <li key={s.nombre}><span className="badge badge-ok" title={s.cientifico}>{s.nombre}</span></li>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="ejes" className="stack">

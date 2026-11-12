@@ -5,7 +5,7 @@ import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet/dist/leaflet.css';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import { establecimiento, lotes as lotesIniciales, capas, type Lote, type LatLng } from '@synta/data';
+import { ecorregion, establecimiento, lotes as lotesIniciales, capas, type Lote, type LatLng } from '@synta/data';
 
 // Spherical excess approximation (Chamberlain & Duquette) — good enough for field-sized polygons.
 export function areaHa(poly: LatLng[]): number {
@@ -87,7 +87,7 @@ export default function Mapa() {
     <div className="mapa screen-fill">
       <header className="mapa-head">
         <h1 className="display" style={{ fontSize: 24 }}>Mapa y lotes</h1>
-        <span className="muted" style={{ fontSize: 13 }}>La Esperanza · {totalHa} ha mapeadas</span>
+        <span className="muted" style={{ fontSize: 13 }}>La Esperanza · Ecorregión {ecorregion.nombre} · {totalHa} ha mapeadas</span>
       </header>
       <aside aria-label="Lotes" className="mapa-list">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -14,6 +14,7 @@ export default function Accion() {
   const [fecha, setFecha] = useState('2026-11-12');
   const [v1, setV1] = useState(inicial.v1);
   const [v2, setV2] = useState(inicial.v2);
+  const [sitio, setSitio] = useState('Borde con corredor / monte nativo');
   const [notas, setNotas] = useState('');
   const [archivo, setArchivo] = useState('');
   const [fileFocus, setFileFocus] = useState(false);
@@ -29,6 +30,7 @@ export default function Accion() {
     fecha,
     [tipo.f1.toLowerCase()]: v1,
     [tipo.f2.toLowerCase()]: v2,
+    ...(tipo.id === 'monitoreo' && { sitio }),
     ...(notas && { notas }),
     ...(archivo && { respaldo: archivo }),
     productor: establecimiento.name,
@@ -92,6 +94,19 @@ export default function Accion() {
               <input id="f2" type="text" className="input" value={v2} onChange={(e) => setV2(e.target.value)} />
             </div>
           </div>
+
+          {tipo.id === 'monitoreo' && (
+            <div className="field">
+              <label htmlFor="sitio">Sitio</label>
+              <select id="sitio" className="input" value={sitio} onChange={(e) => setSitio(e.target.value)} aria-describedby="sitio-ayuda">
+                <option>Borde con corredor / monte nativo</option>
+                <option>Centro del lote</option>
+              </select>
+              <span id="sitio-ayuda" className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
+                Conteo de 15 minutos en el borde del corredor y en el centro del lote; sumá fotos georreferenciadas.
+              </span>
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="notas">Notas (opcional)</label>

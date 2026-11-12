@@ -3,10 +3,10 @@ import { Link, useParams } from 'react-router-dom';
 import { MapContainer, Polygon, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Badge, ProgressBar } from '@synta/ui';
-import { biodiversidadLote3 as bio, capas, certificaciones, corredores, eventos, lotes, ndviSerie, reqLabel } from '@synta/data';
+import { biodiversidadLote3 as bio, capas, certificaciones, corredores, ecorregion, eventos, lotes, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
 import type { Lote as LoteT } from '@synta/data';
 
-const TABS = [['cum', 'Certificación'], ['bio', 'Biodiversidad y corredores'], ['sat', 'Diagnóstico satelital'], ['traz', 'Trazabilidad']] as const;
+const TABS = [['cum', 'Certificación'], ['bio', 'Biodiversidad y corredores'], ['seg', 'Seguimiento'], ['sat', 'Diagnóstico satelital'], ['traz', 'Trazabilidad']] as const;
 type Tab = (typeof TABS)[number][0];
 
 export default function Lote() {
@@ -40,6 +40,7 @@ export default function Lote() {
       <section role="tabpanel" id="lote-panel" aria-labelledby={`tab-${tab}`}>
         {tab === 'cum' && <Certificacion onBio={() => setTab('bio')} />}
         {tab === 'bio' && <Biodiversidad lote={lote} />}
+        {tab === 'seg' && <Seguimiento />}
         {tab === 'sat' && <Satelital />}
         {tab === 'traz' && <Trazabilidad short={lote.name.split(' — ')[0]} />}
       </section>
@@ -135,6 +136,7 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
           <span style={{ fontSize: 13, lineHeight: 1.45 }}>Fuente: {bio.rinde.fuente}.</span>
         </div>
       </div>
+      <MonitoreoCampo />
       <div style={{ flex: '1 1 100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 16 }}>
         {corredores.map((c) => (
           <div key={c.id} className="card stack" style={{ gap: 8 }}>
@@ -148,6 +150,113 @@ function Biodiversidad({ lote }: { lote: LoteT }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function MonitoreoCampo() {
+  const fecha = monitoreos[monitoreos.length - 1].fecha;
+  const ult = monitoreos.filter((m) => m.fecha === fecha);
+  const borde = ult.find((m) => m.sitio.startsWith('Borde'))!;
+  const centro = ult.find((m) => m.sitio.startsWith('Centro'))!;
+  const filas = [
+    { k: 'Polinizadores', b: borde.polinizadores, c: centro.polinizadores },
+    { k: 'Enemigos naturales', b: borde.enemigosNaturales, c: centro.enemigosNaturales },
+    { k: 'Riqueza de especies', b: borde.riqueza, c: centro.riqueza },
+  ];
+  const veces = Math.round(borde.polinizadores / centro.polinizadores);
+  return (
+    <div style={{ flex: '1 1 100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
+      <section className="card stack" style={{ gap: 14 }} aria-labelledby="monit-t">
+        <div className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+          <strong id="monit-t" style={{ fontSize: 15 }}>Monitoreo de campo</strong>
+          <span className="muted" style={{ fontSize: 13 }}>{fecha} · Fuente: Técnico de campo</span>
+        </div>
+        <strong style={{ fontSize: 15, color: 'var(--primary-ink)' }}>{veces}x más polinizadores en el borde con monte nativo que en el centro del lote</strong>
+        {filas.map((f) => (
+          <div key={f.k} className="stack" style={{ gap: 6 }} role="group" aria-label={`${f.k}: ${f.b} en el borde con monte nativo, ${f.c} en el centro del lote`}>
+            <span style={{ fontSize: 14, fontWeight: 600 }} aria-hidden="true">{f.k}</span>
+            {([['Borde con monte nativo', f.b, 'var(--primary)'], ['Centro del lote', f.c, '#9AA69E']] as const).map(([l, v, col]) => (
+              <div key={l} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 140px) 1fr 28px', gap: 8, alignItems: 'center', fontSize: 13 }} aria-hidden="true">
+                <span className="muted">{l}</span>
+                <span style={{ background: 'var(--line-soft)', borderRadius: 4, height: 10, display: 'block' }}><span style={{ display: 'block', height: 10, borderRadius: 4, background: col, width: `${Math.round((v / Math.max(f.b, f.c)) * 100)}%` }} /></span>
+                <strong style={{ textAlign: 'right' }}>{v}</strong>
+              </div>
+            ))}
+          </div>
+        ))}
+        <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>Es la evidencia de campo de que la biodiversidad es funcional: los polinizadores y enemigos naturales usan el borde. Se suma al dato satelital para sostener la certificación.</span>
+      </section>
+      <section className="card stack" style={{ gap: 10 }} aria-labelledby="eco-t">
+        <strong id="eco-t" style={{ fontSize: 15 }}>Ecorregión: {ecorregion.nombre}</strong>
+        <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>Los corredores usan especies nativas de esta ecorregión:</span>
+        <ul className="row" style={{ gap: 8, margin: 0, padding: 0, listStyle: 'none' }}>
+          {ecorregion.especies.map((e) => (
+            <li key={e.cientifico} title={e.cientifico} style={{ border: '1px solid var(--input)', borderRadius: 999, padding: '8px 14px', fontSize: 13, fontWeight: 600, background: 'var(--surface)' }}>{e.nombre}</li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function Seguimiento() {
+  const ref = seguimientoCorredores.find((s) => s.id === 'ref')!;
+  const a = seguimientoCorredores.find((s) => s.id === 'A')!;
+  const s = ref.serie;
+  const ult = s[s.length - 1];
+  const y0 = s[0].anio;
+  const y1 = ult.anio;
+  const x = (anio: number) => 50 + ((anio - y0) / (y1 - y0)) * 730;
+  const y = (v: number) => 180 - ((v - 0.1) / 0.8) * 160;
+  const pts = s.map((p) => `${x(p.anio).toFixed(0)},${y(p.ndvi).toFixed(0)}`).join(' ');
+  const anios = y1 - y0;
+  const tile = { background: 'var(--primary-soft)', color: 'var(--primary-ink)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 2 } as const;
+  const pasos = ['Satélite cada 5 días', 'Monitoreo de campo en primavera 2027', 'Primera medición de autosiembra 2028'];
+  return (
+    <div className="stack" style={{ gap: 16 }}>
+      <section className="card stack" style={{ gap: 14 }} aria-labelledby="ref-t">
+        <div className="stack" style={{ gap: 4 }}>
+          <strong id="ref-t" style={{ fontSize: 16 }}>{ref.titulo}</strong>
+          <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>{ref.nota}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 12 }}>
+          <div style={tile}><span className="display" style={{ fontSize: 30, lineHeight: 1.1 }}>{ult.supervivencia}%</span><span style={{ fontSize: 13 }}>supervivencia actual</span></div>
+          <div style={tile}><span className="display" style={{ fontSize: 30, lineHeight: 1.1 }}>{ult.renuevos.toLocaleString('es-AR')}</span><span style={{ fontSize: 13 }}>renuevos por ha (autosiembra, último año)</span></div>
+          <div style={tile}><span className="display" style={{ fontSize: 30, lineHeight: 1.1 }}>{anios} años</span><span style={{ fontSize: 13 }}>desde la implantación ({ref.implantado})</span></div>
+        </div>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>En {anios} años nunca hizo falta replantar: el corredor se renueva solo. Eso es biodiversidad perdurable.</p>
+        <figure style={{ margin: 0 }} className="stack">
+          <figcaption style={{ fontSize: 13, fontWeight: 600 }}>NDVI del corredor de referencia, {y0}–{y1}</figcaption>
+          <svg viewBox="0 0 800 220" role="img" aria-label={`NDVI del corredor de referencia entre ${y0} y ${y1}: sube de ${s[0].ndvi.toLocaleString('es-AR')} a ${ult.ndvi.toLocaleString('es-AR')} y se estabiliza`} style={{ width: '100%', height: 'auto' }}>
+            <g fontFamily="Inter, sans-serif" fontSize="12" fill="#55615A">
+              <line x1="50" y1={y(0.9)} x2="790" y2={y(0.9)} stroke="#EEF1EC" /><text x="0" y={y(0.9) + 4}>0,9</text>
+              <line x1="50" y1={y(0.5)} x2="790" y2={y(0.5)} stroke="#EEF1EC" /><text x="0" y={y(0.5) + 4}>0,5</text>
+              <line x1="50" y1={y(0.1)} x2="790" y2={y(0.1)} stroke="#DDE2DA" /><text x="0" y={y(0.1) + 4}>0,1</text>
+              {s.map((p) => <text key={p.anio} x={x(p.anio)} y="205" textAnchor="middle">{p.anio}</text>)}
+            </g>
+            <polyline points={pts} fill="none" stroke="#1D6A47" strokeWidth="2.5" strokeLinejoin="round" />
+            {s.map((p) => <circle key={p.anio} cx={x(p.anio)} cy={y(p.ndvi)} r="4" fill="#1D6A47" />)}
+          </svg>
+        </figure>
+      </section>
+      <section className="card stack" style={{ gap: 12 }} aria-labelledby="a-t">
+        <div className="row" style={{ justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+          <strong id="a-t" style={{ fontSize: 16 }}>{a.titulo}</strong>
+          <Badge tone="warn">Recién implantado</Badge>
+        </div>
+        <span className="muted" style={{ fontSize: 13 }}>Implantado el {a.implantado}</span>
+        <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {pasos.map((p, i) => (
+            <li key={p} className="row" style={{ gap: 10, alignItems: 'center', flexWrap: 'nowrap', fontSize: 14 }}>
+              <span aria-hidden="true" style={{ width: 24, height: 24, borderRadius: 999, background: 'var(--primary)', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flex: '0 0 auto' }}>{i + 1}</span>
+              <span>{p}</span>
+            </li>
+          ))}
+        </ol>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>Lo vamos a seguir de la misma forma que el corredor de referencia, para demostrar que perdura.</p>
+        <Link to="/accion?tipo=monitoreo" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Registrar monitoreo</Link>
+      </section>
     </div>
   );
 }
