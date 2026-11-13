@@ -18,7 +18,7 @@ export const NAV = [
   { to: '/mapa', label: 'Mapa y lotes' },
   { to: '/plan', label: 'Plan de acción' },
   { to: '/trazabilidad', label: 'Trazabilidad' },
-  { to: '/pasaporte', label: 'Pasaporte' },
+  { to: '/informe', label: 'Informe de evidencia' },
   { to: '/accion', label: 'Registrar acción' },
 ];
 

@@ -77,7 +77,7 @@ export const capas = {
 
 export const kpis = [
   { label: 'Superficie mapeada', value: '312 ha', sub: '4 lotes' },
-  { label: 'Registros firmados', value: '128', sub: 'en Polygon (testnet)' },
+  { label: 'Registros firmados', value: '128', sub: 'en BFA (Blockchain Federal Argentina)' },
   { label: 'Último análisis satelital', value: 'Hoy', sub: 'Sentinel-2 · 10 m' },
   { label: 'Deforestación post 2020', value: '0 ha', sub: 'detectada en el establecimiento' },
 ];
@@ -183,7 +183,7 @@ export const procesamientoPasos = [
   { label: 'Comparando con la certificación objetivo', detail: 'RTRS · 5 requisitos · 2 mejoras necesarias · 1 dato faltante' },
   { label: 'Diseñando corredores biológicos', detail: '3 corredores · 4,2 ha (1,2 implantadas) · biodiversidad 64 → 78' },
   { label: 'Generando hash SHA-256', detail: 'del diagnóstico completo' },
-  { label: 'Anclando en blockchain', detail: 'Polygon Amoy (simulado)' },
+  { label: 'Anclando en blockchain', detail: 'Blockchain Federal Argentina (simulado)' },
 ];
 
 export const tiposAccion = [

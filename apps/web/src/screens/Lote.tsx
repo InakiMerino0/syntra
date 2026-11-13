@@ -59,7 +59,7 @@ function LoteDetalle({ lote }: { lote: LoteT }) {
         </div>
         <div className="row" style={{ gap: 10 }}>
           <Link to={`/procesando/${lote.id}`} className="btn btn-secondary">Re-analizar</Link>
-          <Link to="/pasaporte" className="btn btn-primary">Generar pasaporte</Link>
+          <Link to="/informe" className="btn btn-primary">Generar informe</Link>
         </div>
       </header>
 

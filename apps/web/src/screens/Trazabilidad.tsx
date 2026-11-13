@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FakeQR, sha256, shortHash } from '@synta/ui';
+import { sha256, shortHash } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
+import QR from "../components/QR";
+import { URL_VERIFICACION } from "../lib/informe";
 import { eventos, eventKinds, type EventKind, type Evento } from '@synta/data';
 
-const PUBLIC_URL = 'https://syntra.app/v/184';
 const resumen = [
   ['Productor', 'La Esperanza (Córdoba)'],
   ['Lotes verificados', '3 de 4 · 256 ha'],
@@ -49,7 +50,7 @@ export default function Trazabilidad() {
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(PUBLIC_URL);
+      await navigator.clipboard.writeText(URL_VERIFICACION);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* clipboard blocked: nothing to show */ }
@@ -63,7 +64,7 @@ export default function Trazabilidad() {
         <div className="stack" style={{ gap: 6, flex: '1 1 320px', minWidth: 0 }}>
           <h1 className="page-title">Trazabilidad</h1>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Cada registro tiene un hash SHA-256 anclado en blockchain. Cualquiera puede recalcularlo y comprobar que no cambió.
+            Cada registro tiene un hash SHA-256 anclado en la Blockchain Federal Argentina (BFA). Cualquiera puede recalcularlo y comprobar que no cambió.
           </p>
         </div>
         <HashTodo variant="primary" />
@@ -129,7 +130,7 @@ export default function Trazabilidad() {
             </span>
           </div>
           <div style={{ alignSelf: 'center' }}>
-            <FakeQR label="Código QR ilustrativo hacia la vista pública" />
+            <QR value={URL_VERIFICACION} size={160} label="Código QR de verificación pública" />
           </div>
           <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 10, padding: 16, borderRadius: 10, background: 'var(--bg)', fontSize: 14 }}>
             {resumen.map(([k, v]) => (
@@ -143,7 +144,7 @@ export default function Trazabilidad() {
             <button type="button" className="btn btn-secondary" style={{ flex: '1 1 auto' }} onClick={copy}>
               <span aria-live="polite">{copied ? '¡Copiado!' : 'Copiar link'}</span>
             </button>
-            <Link to="/pasaporte" className="btn btn-primary" style={{ flex: '1 1 auto' }}>Ver pasaporte</Link>
+            <Link to="/informe" className="btn btn-primary" style={{ flex: "1 1 auto" }}>Ver informe</Link>
           </div>
         </aside>
       </div>

@@ -124,7 +124,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
           {r.rinde && <> · *fuente a citar: {r.rinde.fuente}</>}
         </span>
         <div className="row" style={{ gap: 10 }}>
-          <Link to="/pasaporte" className="btn btn-accent">Ver pasaporte</Link>
+          <Link to="/informe" className="btn btn-accent">Ver informe</Link>
           <Link to="/accion" className="btn btn-ghost-dark">Registrar acción</Link>
         </div>
       </section>

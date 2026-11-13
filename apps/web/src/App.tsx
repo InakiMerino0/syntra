@@ -6,7 +6,7 @@ import Mapa from './screens/Mapa';
 import Procesando from './screens/Procesando';
 import Lote from './screens/Lote';
 import Trazabilidad from './screens/Trazabilidad';
-import Pasaporte from './screens/Pasaporte';
+import Informe from './screens/Informe';
 import Accion from './screens/Accion';
 import Plan from './screens/Plan';
 
@@ -20,7 +20,8 @@ export default function App() {
         <Route path="/procesando/:loteId" element={<Procesando />} />
         <Route path="/lote/:loteId" element={<Lote />} />
         <Route path="/trazabilidad" element={<Trazabilidad />} />
-        <Route path="/pasaporte" element={<Pasaporte />} />
+        <Route path="/informe" element={<Informe />} />
+        <Route path="/pasaporte" element={<Navigate to="/informe" replace />} />
         <Route path="/accion" element={<Accion />} />
         <Route path="/plan" element={<Plan />} />
       </Route>

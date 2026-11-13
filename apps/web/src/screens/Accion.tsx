@@ -152,7 +152,7 @@ export default function Accion() {
             <span style={{ color: 'var(--dark-muted)' }}>SHA-256 (vista previa)</span>
             <span className="mono" style={{ color: 'var(--accent)', overflowWrap: 'anywhere' }}>{hash || 'calculando…'}</span>
           </div>
-          <span style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--dark-muted)' }}>El hash se ancla en blockchain. Los datos quedan en Syntra; en la cadena solo queda la huella.</span>
+          <span style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--dark-muted)' }}>El hash se ancla en la Blockchain Federal Argentina (BFA). Los datos quedan en Syntra; en la cadena solo queda la huella.</span>
         </aside>
       </div>
     </div>

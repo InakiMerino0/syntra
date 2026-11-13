@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { sha256, shortHash } from '@synta/ui';
 import * as data from '@synta/data';
 import { useLotes } from '../store/lotes';
+import { RED_SELLADO } from '../lib/informe';
 import './hashtodo.css';
 
 // The evidence a certifier cares about, grouped in the producer's words. Each group bundles one or more
@@ -122,7 +123,7 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
       root,
       tx: anchor.tx,
       bloque: anchor.bloque,
-      red: 'Polygon Amoy (simulado)',
+      red: RED_SELLADO,
       datasets: rows.map((r) => ({ label: r.label, hash: r.hash, bytes: r.bytes })),
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(evidencia, null, 2)], { type: 'application/json' }));
@@ -202,8 +203,8 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
             <strong className="mono hashtodo-root">{root ?? 'calculando…'}</strong>
             <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>
               {!root ? `${rows.length} de ${items.length} conjuntos sellados`
-                : !anchor ? 'Anclando en Polygon Amoy (simulado)…'
-                : <>Anclado en Polygon Amoy (simulado) · tx <span className="mono" style={{ color: 'var(--dark-ink)' }}>{shortHash(anchor.tx)}</span> · bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{anchor.bloque}</span> · {new Date(anchor.generado).toLocaleString('es-AR')}</>}
+                : !anchor ? 'Anclando en la Blockchain Federal Argentina (simulado)…'
+                : <>Anclado en BFA (Blockchain Federal Argentina, simulado) · tx <span className="mono" style={{ color: 'var(--dark-ink)' }}>{shortHash(anchor.tx)}</span> · bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{anchor.bloque}</span> · {new Date(anchor.generado).toLocaleString('es-AR')}</>}
             </span>
           </section>
 

@@ -70,7 +70,7 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
    - *Cumplimiento*: selector de certificación objetivo + checklist (cumple / no cumple / falta dato) con la evidencia y las mejoras necesarias para cumplir cada requisito.
    - *Trazabilidad*: registros firmados del lote.
 6. **Explorador de trazabilidad / verificación** — timeline histórico (lote creado, satélite, análisis, siembra, insumos, cosecha) con hash, fecha, bloque y fuente; botón "Verificar"; vista pública por QR/link para compradores y certificadores.
-7. **Reporte / certificado exportable** — "Pasaporte de cumplimiento" imprimible/PDF con mapa, estado por eje, hashes y QR.
+7. **Reporte / certificado exportable** — "Informe de Evidencia Ambiental" en PDF descargable con estado de cumplimiento, sello de integridad (BFA, simulado), inventario de archivos con hashes y QR de verificación.
 8. **Registrar acción productiva** *(opcional)* — formulario simple (siembra, fertilización, riego) que se firma y aparece en el timeline.
 
 **Mínimo para la demo:** 3 → 4 → 5 → 6, con 2 como home. 7 y 8 si sobra tiempo.
@@ -88,6 +88,6 @@ pnpm build      # typecheck + build de producción
 Monorepo (pnpm workspaces):
 
 - `apps/web` — app React + Vite + TS. Una pantalla por archivo en `src/screens/`, rutas en `src/App.tsx`.
-- `packages/ui` — tokens CSS, sidebar/layout y primitivas compartidas (`Badge`, `ProgressBar`, `FakeQR`, `sha256`).
+- `packages/ui` — tokens CSS, sidebar/layout y primitivas compartidas (`Badge`, `ProgressBar`, `sha256`).
 - `packages/data` — datos mock (lotes, certificaciones, corredores, eventos). Única fuente de datos hasta que haya backend.
 - `design/` — mockups de referencia de cada pantalla.
