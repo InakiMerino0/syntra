@@ -85,9 +85,15 @@ pnpm dev        # http://localhost:5173
 pnpm build      # typecheck + build de producción
 ```
 
+```bash
+pnpm typecheck  # solo tipos
+```
+
 Monorepo (pnpm workspaces):
 
-- `apps/web` — app React + Vite + TS. Una pantalla por archivo en `src/screens/`, rutas en `src/App.tsx`.
+- `apps/web` — app React + Vite + TS. Una pantalla por archivo en `src/screens/`, rutas en `src/App.tsx`. Adaptadores en `src/lib/`: `sellado.ts` (sellado simulado / BFA), `exportar.ts` (export JSON/GeoJSON), `conectividad.ts` (modelo tipo Circuitscape en el navegador).
 - `packages/ui` — tokens CSS, sidebar/layout y primitivas compartidas (`Badge`, `ProgressBar`, `sha256`).
 - `packages/data` — datos mock (lotes, certificaciones, corredores, eventos). Única fuente de datos hasta que haya backend.
+- `services/circuitscape` — servicio Julia (Circuitscape.jl) para correr la conectividad en servidor. **Sin probar**; ver su README.
+- `docs/` — `plan-implementacion.md` (estado y pendientes) y `arquitectura.md` (arquitectura objetivo de producción y qué es real vs. simulado).
 - `design/` — mockups de referencia de cada pantalla.

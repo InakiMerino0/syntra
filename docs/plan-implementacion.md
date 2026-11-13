@@ -81,31 +81,35 @@ Pie: *"La blockchain prueba cuándo y que no cambió; el auditor de la certifica
 
 ## 4. P1 — Después del pitch (para la segunda ronda, si pasamos)
 
-| # | Tarea | Detalle | Est. |
+**Estado: hecho.**
+
+| # | Tarea | Detalle | Estado |
 |---|---|---|---|
-| 1 | **PDF por certificación** | Selector de certificación en Informe; el PDF solo incluye esa certificación | 1 h |
-| 2 | **Revisión externa** | Estado *Listo para auditor*; campo opcional para cargar el dictamen/firma del auditor de la certificadora y sellarlo | 1,5 h |
-| 3 | **Informe de especies y manejo** | Por corredor: especies de la ecorregión, densidad, época de plantación/trasplante, riego, cuidados (validado por Leo) | 2 h |
-| 4 | **Plan plurianual realista** | Año 0 implementación (~1 año) → monitoreos por campaña hasta 5 años; metas (supervivencia, +% superficie intervenida, +polinizadores) | 2 h |
-| 5 | **Trazabilidad mejorada** | Hash completo visible, link "ver archivo original" (JSON/foto), filtro por fuente | 1,5 h |
-| 6 | **Registrar acción simplificado** | 3 campos + respaldo; resto opcional plegado | 1 h |
-| 7 | **Cumplimiento expandible** | Tocar cada eje del Panel y ver qué cumple / qué falta | 1 h |
-| 8 | **Rebranding** | Paleta y tipografía del Instagram (azul marino + hoja verde) | 2 h |
-| 9 | **Impacto social en la app** | Indicadores: empleo local en implantación/monitoreo, servicios ecosistémicos para la comunidad (agua, sombra, polinización), resiliencia | 1,5 h |
+| 1 | **PDF por certificación** | Selector de certificación en Informe; el PDF solo incluye esa certificación | Hecho |
+| 2 | **Revisión externa** | Estado *Listo para auditor*; campo opcional para el dictamen del auditor de la certificadora, sellado (Syntra no firma) | Hecho |
+| 3 | **Informe de especies y manejo** | Por corredor: especies de la ecorregión, densidad, época, riego, cuidados (pendiente validar con Leo) | Hecho |
+| 4 | **Plan plurianual realista** | Año 0 implementación (~1 año) → monitoreos por campaña hasta 5 años; metas; presupuestos y garantía | Hecho |
+| 5 | **Trazabilidad mejorada** | Hash completo, link al archivo original, filtro por fuente, verificador público | Hecho |
+| 6 | **Registrar acción simplificado** | 3 campos + respaldo; resto opcional plegado | Hecho |
+| 7 | **Cumplimiento expandible** | Tocar cada eje del Panel y ver qué cumple / qué falta | Hecho |
+| 8 | **Rebranding** | Paleta y tipografía del Instagram (azul marino + hoja verde) | Hecho |
+| 9 | **Impacto social en la app** | Empleo local, servicios ecosistémicos, resiliencia | Hecho |
 
 ## 5. P2 — Hacerlo real (post-hackatón / segunda ronda larga)
 
-| # | Tarea | Cómo |
-|---|---|---|
-| 1 | **Motor de conectividad real** | Capas → *superficie de resistencia* (rendimiento, suelo, inundables, NDVI, biodiversidad funcional) → **Circuitscape.jl** (servicio Julia en backend) con parches como nodos focales → mapa de corriente (la "sexta capa") → extracción del corredor. Para la demo puede usarse una versión propia en el navegador del mismo método (resolver la red de resistencias en una grilla) |
-| 2 | **Datos satelitales reales** | Sentinel-2 (NDVI, cambio de cobertura) vía Copernicus/Sentinel Hub o Google Earth Engine; focos de calor de NASA FIRMS |
-| 3 | **Mapa de rendimiento real** | Importar shapefile/CSV de monitores de cosechadora (John Deere Ops Center, etc.) |
-| 4 | **Sellado real en BFA** | Nodo/servicio de sellado de la Blockchain Federal Argentina (Merkle diario, como en Mando NEC); almacenamiento WORM de evidencias |
-| 5 | **Backend y cuentas** | Usuarios (productor, perito, certificadora), persistencia, permisos de solo lectura para certificadoras |
-| 6 | **App de campo offline** | PWA con cola offline para monitoreos sin señal (lo que hace Cropwise con tablets) |
-| 7 | **Planes por presupuesto** | Básico / medio / premium según ha implantadas y especies |
-| 8 | **Garantía de reposición** | Evento "pérdida" → reposición → nuevo sellado |
-| 9 | **Requisitos FSA/GlobalG.A.P. validados** | Mapear indicadores oficiales FSA y GlobalG.A.P. a requisitos verificables (con Leo) |
+Arquitectura objetivo en [`arquitectura.md`](arquitectura.md).
+
+| # | Tarea | Cómo | Estado |
+|---|---|---|---|
+| 1 | **Motor de conectividad real** | Capas → superficie de resistencia → **Circuitscape.jl** (parches como nodos focales) → mapa de corriente (la "sexta capa") → corredor. En el navegador ya corre una versión simplificada del mismo método | Servicio listo **sin probar** (`services/circuitscape/`, contrato igual al de `conectividad.ts`); falta correrlo y compararlo |
+| 2 | **Datos satelitales reales** | Sentinel-2 (NDVI, cambio de cobertura) vía Copernicus/Sentinel Hub o Earth Engine; focos de calor NASA FIRMS | En curso (otra tarea); falta definir cuenta/proveedor |
+| 3 | **Mapa de rendimiento real** | Importar shapefile/CSV de monitores de cosechadora | En curso (importable) |
+| 4 | **Sellado real en BFA** | Worker de sellado (Merkle diario) contra el servicio de sellado de tiempo de la BFA; WORM | Adaptador listo (`apps/web/src/lib/sellado.ts`: `SelladorSimulado` + `SelladorBFA` sin probar); **falta alta en la BFA** y confirmar endpoint |
+| 5 | **Backend y cuentas** | Usuarios (productor, técnico, auditor de solo lectura), persistencia, permisos | Arquitectura definida (Supabase + PostGIS); sin implementar. Hay export portable en `apps/web/src/lib/exportar.ts` (sin conectar a la UI) |
+| 6 | **App de campo offline** | PWA con cola offline para monitoreos sin señal | En curso |
+| 7 | **Planes por presupuesto** | Básico / medio / premium según ha implantadas y especies | Hecho |
+| 8 | **Garantía de reposición** | Evento "pérdida" → reposición → nuevo sellado | Hecho |
+| 9 | **Requisitos FSA/GlobalG.A.P. validados** | Mapear indicadores oficiales a requisitos verificables (con Leo) | Pendiente (necesita validación biológica) |
 
 ## 6. Competencia: Cropwise (Syngenta)
 

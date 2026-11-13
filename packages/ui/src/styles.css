@@ -250,3 +250,16 @@ table.table td { padding: 12px 8px; border-bottom: 1px solid var(--line-soft); }
   .mapa-stack { left: 8px; right: 8px; bottom: 20px; max-width: none; }
   .mapa-leyenda-head { min-height: 36px; }
 }
+
+/* Rendimiento y offline */
+.rend-import { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); clear: both; }
+.rend-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; }
+.rend-file:focus-visible + .rend-btn { outline: 3px solid #4c9bd6; outline-offset: 2px; }
+.rend-btn { min-height: 44px; font-size: 13px; cursor: pointer; text-align: center; }
+.rend-link { min-height: 36px; border: 0; background: transparent; color: var(--primary); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; text-align: left; padding: 0 8px; }
+.rend-msg { font-size: 12px; line-height: 1.4; color: var(--warn-fg); }
+.rend-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
+.rend-bar i { display: block; height: 100%; }
+.offline-banner { display: flex; gap: 8px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; background: var(--warn-bg); color: var(--warn-fg); font-size: 14px; line-height: 1.45; font-weight: 600; }
+.offline-pend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 14px; border-radius: 8px; background: var(--primary-soft); color: var(--ink); font-size: 14px; }
+.toast-sync { position: fixed; z-index: 3000; left: 16px; right: 16px; bottom: 20px; max-width: 420px; margin: 0 auto; padding: 12px 16px; border-radius: 10px; background: var(--dark); color: var(--dark-ink); font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }

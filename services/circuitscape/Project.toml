@@ -1,0 +1,11 @@
+name = "SyntraCircuitscape"
+uuid = "5f0c2a52-7b8e-4c0e-9a55-1d2c3e4f5a61"
+version = "0.1.0"
+
+[deps]
+Circuitscape = "2b7a1792-8151-5239-925d-e2b8fdfa3201"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+
+[compat]
+julia = "1.9"

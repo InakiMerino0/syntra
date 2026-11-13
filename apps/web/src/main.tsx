@@ -10,3 +10,10 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// Offline-first for field use: the service worker caches the built app so it opens without signal. Production only.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    try { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => { /* unsupported context */ }); } catch { /* ignore */ }
+  });
+}

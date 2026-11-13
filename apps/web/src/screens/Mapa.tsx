@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, ImageOverlay, Polygon, Polyline, CircleMarker, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -6,6 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import { ecorregion, establecimiento, lotes as lotesIniciales, capas, parchesBosque, zonasRendimiento, zonasInundables, type Lote, type LatLng } from '@synta/data';
 import { useLotes, setLotes } from '../store/lotes';
 import { modelarConectividad, heatmapDataURL, gradienteLeyenda } from '../lib/conectividad';
+import { leerArchivo, procesar, csvEjemplo, COLORES, type Lectura } from '../lib/rendimiento';
+import { useRendimiento, setRendimiento } from '../store/rendimiento';
 
 // Spherical excess approximation (Chamberlain & Duquette) — good enough for field-sized polygons.
 export function areaHa(poly: LatLng[]): number {
@@ -75,6 +77,13 @@ function Vertices({ pts, modo, selIdx, onMove, onSelect, onInsert, onCloseShape 
   );
 }
 
+/** Zooms to the imported yield map once, when it appears. */
+function AjustarA({ bounds, clave }: { bounds: [[number, number], [number, number]] | null; clave: string }) {
+  const map = useMap();
+  useEffect(() => { if (bounds) map.fitBounds(bounds, { padding: [24, 24] }); }, [clave]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 const floating: CSSProperties = { position: 'absolute', zIndex: 1000, background: 'var(--surface)', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' };
 
 export default function Mapa() {
@@ -100,6 +109,33 @@ export default function Mapa() {
   const [naming, setNaming] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [capasOpen, setCapasOpen] = useState(false);
+  const rend = useRendimiento();
+  const [rendOn, setRendOn] = useState(true);
+  const [lect, setLect] = useState<{ nombre: string; texto: string; lectura: Lectura } | null>(null);
+  const [rendMsg, setRendMsg] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+  const aplicar = (nombre: string, texto: string, prop?: string) => {
+    const lectura = leerArchivo(nombre, texto, prop);
+    setLect({ nombre, texto, lectura });
+    if (lectura.error) { setRendMsg(lectura.error); return; }
+    const r = procesar(lectura.puntos, lectura.descartadas);
+    if ('error' in r) { setRendMsg(r.error); return; }
+    setRendimiento({ nombre, columna: lectura.columna, resultado: r });
+    setRendOn(true); setRendMsg('');
+  };
+  const onArchivo = async (f?: File) => {
+    if (!f) return;
+    setRendMsg('Procesando…');
+    try { aplicar(f.name, await f.text()); } catch { setRendMsg('No pude leer el archivo.'); }
+    if (fileRef.current) fileRef.current.value = '';
+  };
+  const bajarEjemplo = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csvEjemplo()], { type: 'text/csv' }));
+    a.download = 'rendimiento-ejemplo-lote3.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
   const sel = lotes.find((l) => l.id === selId);
   const totalHa = Math.round(lotes.reduce((s, l) => s + l.ha, 0));
   const draftHa = draft.length >= 3 ? areaHa(draft) : 0;
@@ -191,6 +227,15 @@ export default function Mapa() {
             <ImageOverlay url={modelo.img} opacity={0.75} interactive={false}
               bounds={[[modelo.grid.bounds.sur, modelo.grid.bounds.oeste], [modelo.grid.bounds.norte, modelo.grid.bounds.este]]} />
           )}
+          {rend && rendOn && (
+            <>
+              <ImageOverlay url={rend.resultado.img} opacity={0.7} interactive={false} bounds={rend.resultado.bounds} />
+              {rend.resultado.bajo.map((p, i) => (
+                <Polygon key={`rb${i}`} positions={p} interactive={false} pathOptions={{ color: COLORES.bajo, weight: 1, dashArray: '3 3', fill: false }} />
+              ))}
+            </>
+          )}
+          {rend && <AjustarA bounds={rend.resultado.bounds} clave={rend.nombre + rend.resultado.stats.usados} />}
           {capa.rendimiento && zonasRendimiento.map((z, i) => (
             <Polygon key={`r${i}`} positions={z.polygon} interactive={modo === 'view'}
               pathOptions={{ color: z.nivel === 'bajo' ? '#E4572E' : '#F2C14E', weight: 1, fillColor: z.nivel === 'bajo' ? '#E4572E' : '#F2C14E', fillOpacity: 0.45 }}>
@@ -264,10 +309,44 @@ export default function Mapa() {
               {c.label}
             </button>
           ))}
+          <div className="rend-import">
+            <input ref={fileRef} id="rend-file" type="file" accept=".csv,.geojson,.json" className="rend-file" onChange={(e) => onArchivo(e.target.files?.[0])} />
+            <label htmlFor="rend-file" className="btn btn-secondary rend-btn">Importar mapa de rendimiento</label>
+            <button type="button" className="rend-link" onClick={bajarEjemplo}>Descargar CSV de ejemplo</button>
+            {rend && (
+              <button type="button" aria-pressed={rendOn} onClick={() => setRendOn((o) => !o)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, padding: '0 8px', border: 0, borderRadius: 6, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, color: 'var(--ink)', textAlign: 'left' }}>
+                <span aria-hidden="true" style={{ width: 16, height: 16, borderRadius: 4, flex: '0 0 auto', border: `2px solid ${COLORES.bajo}`, background: rendOn ? COLORES.bajo : 'transparent' }} />
+                Mapa de rendimiento (importado)
+              </button>
+            )}
+            {lect && !lect.lectura.error && (lect.lectura.props?.length ?? 0) > 1 && (
+              <div className="field">
+                <label htmlFor="rend-prop">Propiedad de rendimiento</label>
+                <select id="rend-prop" className="input" value={lect.lectura.columna} onChange={(e) => aplicar(lect.nombre, lect.texto, e.target.value)}>
+                  {lect.lectura.props!.map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+            )}
+            {rendMsg && <span role="status" className="rend-msg">{rendMsg}</span>}
+          </div>
         </fieldset>
 
         {modo === 'view' && (
         <div className="mapa-stack">
+        {rend && rendOn && (
+          <div className="mapa-leyenda rend-card" role="group" aria-label="Resumen del mapa de rendimiento importado">
+            <strong style={{ fontSize: 13 }}>Mapa de rendimiento (importado)</strong>
+            <div className="rend-bar" aria-hidden="true">
+              <i style={{ width: `${rend.resultado.stats.pct.bajo}%`, background: COLORES.bajo }} />
+              <i style={{ width: `${rend.resultado.stats.pct.medio}%`, background: COLORES.medio }} />
+              <i style={{ width: `${rend.resultado.stats.pct.alto}%`, background: COLORES.alto }} />
+            </div>
+            <p>Bajo (&lt;85%) {rend.resultado.stats.pct.bajo}% · Medio {rend.resultado.stats.pct.medio}% · Alto (&gt;105%) {rend.resultado.stats.pct.alto}% del área medida</p>
+            <p className="mono">{rend.resultado.stats.usados.toLocaleString('es-AR')} puntos usados · {rend.resultado.stats.descartados.toLocaleString('es-AR')} descartados (ceros y extremos) · mediana {Math.round(rend.resultado.stats.medianaOriginal).toLocaleString('es-AR')} · celdas de ~{rend.resultado.stats.celdaM} m</p>
+            <p><strong style={{ color: COLORES.bajo }}>{fmtHa(rend.resultado.celdasBajo * rend.resultado.stats.celdaM ** 2 / 10000)} ha</strong> de bajo rendimiento: candidatas para infraestructura verde (contorno punteado). Se procesa en tu dispositivo.</p>
+          </div>
+        )}
         {modelo && (
           <div className="mapa-leyenda" role="group" aria-label="Leyenda de conectividad">
             <button type="button" className="mapa-leyenda-head" aria-expanded={legOpen} onClick={() => setLegOpen((o) => !o)}>

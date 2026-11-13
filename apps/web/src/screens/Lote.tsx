@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { MapContainer, Polygon, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,6 +6,8 @@ import { Badge, ProgressBar } from '@synta/ui';
 import { biodiversidadLote3 as bio, capas, parchesBosque, certificaciones, corredores, ecorregion, eventos, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
 import type { Lote as LoteT, Certificacion as CertT } from '@synta/data';
 import { useLote, LOTE_CON_DIAGNOSTICO } from '../store/lotes';
+import { buscarEscenas, bboxDe, ndviLote, serieNdvi } from '../lib/sentinel';
+import type { NdviResultado, PuntoNdvi } from '../lib/sentinel';
 
 const TABS = [['cum', 'Certificación'], ['bio', 'Biodiversidad y corredores'], ['seg', 'Seguimiento'], ['sat', 'Diagnóstico satelital'], ['traz', 'Trazabilidad']] as const;
 type Tab = (typeof TABS)[number][0];
@@ -73,7 +75,7 @@ function LoteDetalle({ lote }: { lote: LoteT }) {
         {tab === 'cum' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Certificacion kind={kind} onBio={() => setTab('bio')} />)}
         {tab === 'bio' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Biodiversidad lote={lote} kind={kind} />)}
         {tab === 'seg' && (kind === 'none' ? <SinDiagnostico id={lote.id} /> : <Seguimiento kind={kind} />)}
-        {tab === 'sat' && <Satelital />}
+        {tab === 'sat' && <Satelital polygon={lote.polygon} />}
         {tab === 'traz' && <Trazabilidad short={lote.name.split(' — ')[0]} />}
       </section>
     </div>
@@ -334,37 +336,139 @@ function SatImg({ label, bg, field, stroke, sw }: { label: string; bg: string; f
   );
 }
 
-function Satelital() {
-  const pts = ndviSerie.map((v, i) => `${(40 + (i * 750) / (ndviSerie.length - 1)).toFixed(0)},${(180 - (v - 0.1) * 200).toFixed(0)}`).join(' ');
-  const max = Math.max(...ndviSerie).toLocaleString('es-AR');
+const fmtN = (n: number, d = 2) => n.toFixed(d).replace('.', ',');
+const fmtFecha = (iso: string) => new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+function Satelital({ polygon }: { polygon: LoteT['polygon'] }) {
+  const [estado, setEstado] = useState<'idle' | 'cargando' | 'ok' | 'error'>('idle');
+  const [real, setReal] = useState<NdviResultado | null>(null);
+  const [serie, setSerie] = useState<PuntoNdvi[]>([]);
+  const [msg, setMsg] = useState('');
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => () => abort.current?.abort(), []);
+
+  async function traer() {
+    abort.current?.abort();
+    const ac = new AbortController();
+    abort.current = ac;
+    setEstado('cargando'); setMsg('Buscando la última escena…'); setSerie([]); setReal(null);
+    let leido = false;
+    try {
+      const hoy = new Date(), ini = new Date(hoy.getTime() - 120 * 864e5);
+      const escenas = await buscarEscenas(bboxDe(polygon), ini.toISOString().slice(0, 10) + 'T00:00:00Z', hoy.toISOString().slice(0, 10) + 'T23:59:59Z', 20, 10, ac.signal);
+      if (!escenas.length) throw new Error('no hay escenas despejadas recientes sobre este lote');
+      let r: NdviResultado | null = null;
+      for (const e of escenas.slice(0, 3)) {
+        setMsg('Leyendo píxeles del lote…');
+        try { r = await ndviLote(polygon, e, ac.signal); break; } catch (err) { if ((err as Error).name === 'AbortError') throw err; }
+      }
+      if (!r) throw new Error('no se pudo leer ninguna escena sobre este lote');
+      leido = true;
+      setReal(r); setEstado('ok'); setMsg('Calculando la serie histórica…');
+      const p = await serieNdvi(polygon, 10, parcial => setSerie(parcial), ac.signal);
+      setSerie(p); setMsg('');
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+      setEstado(leido ? 'ok' : 'error');
+      setMsg(leido ? 'No se pudo completar la serie histórica.' : `No se pudo traer el dato real (${(err as Error).message}).`);
+    }
+  }
+
   const figcap = { padding: '12px 16px', fontSize: 13, display: 'flex', justifyContent: 'space-between', gap: 8 } as const;
+  const esReal = estado === 'ok' && real;
+  const mockPts = ndviSerie.map((v, i) => `${(40 + (i * 750) / (ndviSerie.length - 1)).toFixed(0)},${(180 - (v - 0.1) * 200).toFixed(0)}`).join(' ');
+  const mockMax = Math.max(...ndviSerie).toLocaleString('es-AR');
+
+  const sy = (v: number) => 180 - (Math.max(0.1, Math.min(0.9, v)) - 0.1) * 200;
+  const t0 = serie.length ? new Date(serie[0].fecha).getTime() : 0;
+  const t1 = serie.length ? new Date(serie[serie.length - 1].fecha).getTime() : 1;
+  const sx = (iso: string) => (t1 === t0 ? 415 : 40 + ((new Date(iso).getTime() - t0) / (t1 - t0)) * 750);
+
   return (
     <div className="stack" style={{ gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
-        <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
-          <SatImg label="Imagen satelital del lote en diciembre 2020" bg="#4C6B3A" field="#8FA95C" stroke="#FFFFFF" sw={2} />
-          <figcaption style={figcap}><strong>Dic 2020 (línea base EUDR)</strong><span className="muted">Sentinel-2 L2A</span></figcaption>
-        </figure>
-        <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
-          <SatImg label="Imagen satelital del lote en noviembre 2026, sin pérdida de parches de bosque" bg="#55703B" field="#A9B866" stroke="#FFD166" sw={3} />
-          <figcaption style={figcap}><strong>Nov 2026</strong><span className="muted">0 ha de pérdida de cobertura</span></figcaption>
-        </figure>
-      </div>
-      <figure className="card stack" style={{ margin: 0 }}>
-        <figcaption className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
-          <strong style={{ fontSize: 15 }}>NDVI medio del lote (línea de base)</strong>
-          <span className="muted" style={{ fontSize: 13 }}>2024 → 2026 · cada punto es una escena firmada</span>
-        </figcaption>
-        <svg viewBox="0 0 800 220" role="img" aria-label={`Serie temporal de NDVI 2024–2026 con dos ciclos de cultivo, máximo ${max}`} style={{ width: '100%', height: 'auto' }}>
-          <g fontFamily="Inter, sans-serif" fontSize="12" fill="#55615A">
-            <line x1="40" y1="20" x2="790" y2="20" stroke="#EEF1EC" /><text x="0" y="24">0,9</text>
-            <line x1="40" y1="100" x2="790" y2="100" stroke="#EEF1EC" /><text x="0" y="104">0,5</text>
-            <line x1="40" y1="180" x2="790" y2="180" stroke="#DDE2DA" /><text x="0" y="184">0,1</text>
-            <text x="40" y="205">2024</text><text x="400" y="205">2025</text><text x="750" y="205">2026</text>
-          </g>
-          <polyline points={pts} fill="none" stroke="#1b2370" strokeWidth="2.5" strokeLinejoin="round" />
-        </svg>
-      </figure>
+      <section className="card stack" style={{ gap: 10 }}>
+        <strong style={{ fontSize: 15 }}>Datos reales del satélite</strong>
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>Datos reales: Copernicus Sentinel-2 L2A vía Earth Search (AWS Open Data). Se leen en tu navegador sólo los píxeles de este lote, sin claves ni servidor propio.</p>
+        <div className="row" style={{ gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button type="button" className="btn btn-primary" onClick={traer} disabled={estado === 'cargando'}>{estado === 'cargando' ? 'Trayendo datos…' : esReal ? 'Actualizar datos reales' : 'Traer datos reales de Sentinel-2'}</button>
+          {msg && <span role="status" className="muted" style={{ fontSize: 13 }}>{msg}</span>}
+        </div>
+        {estado === 'error' && <p style={{ margin: 0, fontSize: 13 }}>Mientras tanto se muestran datos de ejemplo.</p>}
+      </section>
+
+      {esReal && real && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
+            <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+              {real.png
+                ? <img src={real.png} alt={`NDVI real del lote, escena del ${fmtFecha(real.escena.fecha)}`} style={{ display: 'block', width: '100%', height: 'auto', imageRendering: 'pixelated', background: '#1F2A24' }} />
+                : <div className="muted" style={{ padding: 16, fontSize: 13 }}>Vista previa no disponible en este navegador.</div>}
+              <figcaption style={figcap}><strong>NDVI del lote · {fmtFecha(real.escena.fecha)}</strong><span className="muted">10 m por píxel</span></figcaption>
+            </figure>
+            <div className="card stack" style={{ gap: 8 }}>
+              <span className="muted" style={{ fontSize: 13 }}>NDVI medio del lote</span>
+              <strong style={{ fontSize: 32, lineHeight: 1 }}>{fmtN(real.media)}</strong>
+              <span style={{ fontSize: 13 }}>Mín. {fmtN(real.min)} · Máx. {fmtN(real.max)} · {real.pixeles.toLocaleString('es-AR')} píxeles dentro del lote</span>
+              <span className="muted" style={{ fontSize: 13 }}>Escena {fmtFecha(real.escena.fecha)} · nubes en la escena {fmtN(real.escena.nubes, 1)} %</span>
+              <span className="row" style={{ gap: 6, fontSize: 12, alignItems: 'center' }}>
+                <span aria-hidden="true" style={{ width: 90, height: 8, borderRadius: 4, background: 'linear-gradient(90deg,#C82828,#F5CD46,#1E8232)' }} />
+                <span className="muted">0,1 → 0,8</span>
+              </span>
+            </div>
+          </div>
+          <figure className="card stack" style={{ margin: 0 }}>
+            <figcaption className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+              <strong style={{ fontSize: 15 }}>NDVI medio del lote, escenas reales</strong>
+              <span className="muted" style={{ fontSize: 13 }}>{serie.length ? `${serie.length} escenas despejadas` : 'Calculando…'}</span>
+            </figcaption>
+            {serie.length > 0 && (
+              <svg viewBox="0 0 800 220" role="img" aria-label={`Serie de NDVI real de ${serie.length} escenas Sentinel-2, de ${fmtFecha(serie[0].fecha)} a ${fmtFecha(serie[serie.length - 1].fecha)}`} style={{ width: '100%', height: 'auto' }}>
+                <g fontFamily="Inter, sans-serif" fontSize="12" fill="#55615A">
+                  <line x1="40" y1="20" x2="790" y2="20" stroke="#EEF1EC" /><text x="0" y="24">0,9</text>
+                  <line x1="40" y1="100" x2="790" y2="100" stroke="#EEF1EC" /><text x="0" y="104">0,5</text>
+                  <line x1="40" y1="180" x2="790" y2="180" stroke="#DDE2DA" /><text x="0" y="184">0,1</text>
+                  <text x="40" y="205">{fmtFecha(serie[0].fecha)}</text>
+                  <text x="790" y="205" textAnchor="end">{fmtFecha(serie[serie.length - 1].fecha)}</text>
+                </g>
+                {serie.length > 1 && <polyline points={serie.map(p => `${sx(p.fecha).toFixed(0)},${sy(p.ndvi).toFixed(0)}`).join(' ')} fill="none" stroke="#1b2370" strokeWidth="2.5" strokeLinejoin="round" />}
+                {serie.map(p => <circle key={p.id} cx={sx(p.fecha)} cy={sy(p.ndvi)} r="4" fill="#1b2370"><title>{`${fmtFecha(p.fecha)}: NDVI ${fmtN(p.ndvi)}`}</title></circle>)}
+              </svg>
+            )}
+            <span className="muted" style={{ fontSize: 12 }}>Fuente: Sentinel-2 L2A (Copernicus), banda roja B04 y NIR B08. Datos reales.</span>
+          </figure>
+        </>
+      )}
+
+      {!esReal && (
+        <>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}><strong>Datos de ejemplo:</strong> las imágenes y la serie de abajo son ilustrativas, no provienen del satélite.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 16 }}>
+            <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+              <SatImg label="Imagen de ejemplo del lote en diciembre 2020" bg="#4C6B3A" field="#8FA95C" stroke="#FFFFFF" sw={2} />
+              <figcaption style={figcap}><strong>Dic 2020 (línea base EUDR)</strong><span className="muted">Datos de ejemplo</span></figcaption>
+            </figure>
+            <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+              <SatImg label="Imagen de ejemplo del lote en noviembre 2026, sin pérdida de parches de bosque" bg="#55703B" field="#A9B866" stroke="#FFD166" sw={3} />
+              <figcaption style={figcap}><strong>Nov 2026</strong><span className="muted">Datos de ejemplo</span></figcaption>
+            </figure>
+          </div>
+          <figure className="card stack" style={{ margin: 0 }}>
+            <figcaption className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+              <strong style={{ fontSize: 15 }}>NDVI medio del lote (ejemplo)</strong>
+              <span className="muted" style={{ fontSize: 13 }}>2024 → 2026 · datos de ejemplo</span>
+            </figcaption>
+            <svg viewBox="0 0 800 220" role="img" aria-label={`Serie de ejemplo de NDVI 2024–2026 con dos ciclos de cultivo, máximo ${mockMax}`} style={{ width: '100%', height: 'auto' }}>
+              <g fontFamily="Inter, sans-serif" fontSize="12" fill="#55615A">
+                <line x1="40" y1="20" x2="790" y2="20" stroke="#EEF1EC" /><text x="0" y="24">0,9</text>
+                <line x1="40" y1="100" x2="790" y2="100" stroke="#EEF1EC" /><text x="0" y="104">0,5</text>
+                <line x1="40" y1="180" x2="790" y2="180" stroke="#DDE2DA" /><text x="0" y="184">0,1</text>
+                <text x="40" y="205">2024</text><text x="400" y="205">2025</text><text x="750" y="205">2026</text>
+              </g>
+              <polyline points={mockPts} fill="none" stroke="#1b2370" strokeWidth="2.5" strokeLinejoin="round" />
+            </svg>
+          </figure>
+        </>
+      )}
     </div>
   );
 }
