@@ -13,7 +13,7 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.
 export default function Plan() {
   const [params, setParams] = useSearchParams();
   const certParam = params.get('cert');
-  const certId = certificaciones.some((c) => c.id === certParam) ? certParam! : 'rtrs';
+  const certId = certificaciones.some((c) => c.id === certParam) ? certParam! : 'fsa';
   const [fase, setFase] = useState<Fase>('idle');
   const [paso, setPaso] = useState(0);
   const [hechas, setHechas] = useState<Set<string>>(new Set());
@@ -113,7 +113,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
           <Stat label="Requisitos hoy → con el plan" value={`${r.cumplidosHoy}/${r.totalRequisitos} → ${r.cumplidosConPlan}/${r.totalRequisitos}`} />
           <Stat label="Superficie a implantar" value={r.haImplantar ? `${r.haImplantar.toLocaleString('es-AR')} ha` : '—'} />
           <Stat label="Biodiversidad Lote 3" value={r.bioProyectada !== r.bioActual ? `${r.bioActual} → ${r.bioProyectada}` : `${r.bioActual}`} />
-          <Stat label={r.rinde ? `Rinde estimado en ${r.rinde.cultivo}*` : 'Rinde estimado'} value={r.rinde ? `+${r.rinde.pct}%` : '—'} />
+          <Stat label={r.rinde ? `Masa de semilla de ${r.rinde.cultivo}*` : 'Masa de semilla'} value={r.rinde ? `+${r.rinde.pct}%` : '—'} />
         </div>
         <div className="stack" style={{ gap: 6 }}>
           <span style={{ fontSize: 13, color: '#c3d2c8' }}>Con lo que marcaste como hecho: {cumplidosAhora}/{r.totalRequisitos} requisitos · {hechas.size}/{plan.acciones.length} acciones</span>
@@ -121,7 +121,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
         </div>
         <span style={{ fontSize: 12, color: 'var(--dark-muted)', ...wrap }}>
           {plan.acciones.length} {plan.acciones.length === 1 ? 'acción' : 'acciones'} · {r.porPrioridad.alta} alta · {r.porPrioridad.media} media · {r.porPrioridad.baja} baja
-          {r.rinde && <> · *fuente a citar: {r.rinde.fuente}</>}
+          {r.rinde && <> · Fuentes: *{r.rinde.cultivo[0].toUpperCase() + r.rinde.cultivo.slice(1)}: +{r.rinde.pct}% de {r.rinde.metrica} con polinizadores ({r.rinde.fuente}); girasol sin polinizadores: −30,4% de rendimiento (Amarilla et al. 2025, Field Crops Research 109736)</>}
         </span>
         <div className="row" style={{ gap: 10 }}>
           <Link to="/informe" className="btn btn-accent">Ver informe</Link>

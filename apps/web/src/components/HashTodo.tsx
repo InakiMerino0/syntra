@@ -10,7 +10,7 @@ import './hashtodo.css';
 const GRUPOS: { label: string; desc: string; keys: string[] }[] = [
   { label: 'Datos del establecimiento', desc: 'Nombre, RENSPA, ubicación y ecorregión', keys: ['establecimiento', 'ecorregion'] },
   { label: 'Lotes y sus polígonos', desc: 'Límites georreferenciados y superficie de cada lote', keys: ['lotes'] },
-  { label: 'Análisis satelital', desc: 'NDVI, cambio de cobertura, bosque nativo y focos de calor', keys: ['capas', 'ndviSerie', 'kpis'] },
+  { label: 'Análisis satelital', desc: 'NDVI, cambio de cobertura, parches de bosque y focos de calor', keys: ['capas', 'ndviSerie', 'kpis'] },
   { label: 'Cumplimiento por certificación', desc: 'Estado de cada requisito y de cada eje regulatorio', keys: ['certificaciones', 'ejes'] },
   { label: 'Índice de biodiversidad', desc: 'Puntaje actual, proyectado y su desglose', keys: ['biodiversidadLote3'] },
   { label: 'Corredores biológicos', desc: 'Diseño, superficie y seguimiento en el tiempo', keys: ['corredores', 'seguimientoCorredores'] },

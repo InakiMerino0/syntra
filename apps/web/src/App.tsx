@@ -9,11 +9,13 @@ import Trazabilidad from './screens/Trazabilidad';
 import Informe from './screens/Informe';
 import Accion from './screens/Accion';
 import Plan from './screens/Plan';
+import Demo from './screens/Demo';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/demo" element={<Demo />} />
       <Route element={<AppLayout />}>
         <Route path="/panel" element={<Panel />} />
         <Route path="/mapa" element={<Mapa />} />

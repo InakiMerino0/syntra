@@ -16,7 +16,7 @@ export default function Accion() {
   const [fecha, setFecha] = useState('2026-11-12');
   const [v1, setV1] = useState(inicial.v1);
   const [v2, setV2] = useState(inicial.v2);
-  const [sitio, setSitio] = useState('Borde con corredor / monte nativo');
+  const [sitio, setSitio] = useState('Borde con corredor / parche de bosque');
   const [notas, setNotas] = useState('');
   const [archivo, setArchivo] = useState('');
   const [fileFocus, setFileFocus] = useState(false);
@@ -107,7 +107,7 @@ export default function Accion() {
             <div className="field">
               <label htmlFor="sitio">Sitio</label>
               <select id="sitio" className="input" value={sitio} onChange={(e) => setSitio(e.target.value)} aria-describedby="sitio-ayuda">
-                <option>Borde con corredor / monte nativo</option>
+                <option>Borde con corredor / parche de bosque</option>
                 <option>Centro del lote</option>
               </select>
               <span id="sitio-ayuda" className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>

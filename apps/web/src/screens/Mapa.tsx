@@ -1,10 +1,11 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Polygon, Polyline, CircleMarker, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, ImageOverlay, Polygon, Polyline, CircleMarker, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ecorregion, establecimiento, lotes as lotesIniciales, capas, type Lote, type LatLng } from '@synta/data';
+import { ecorregion, establecimiento, lotes as lotesIniciales, capas, parchesBosque, zonasRendimiento, zonasInundables, type Lote, type LatLng } from '@synta/data';
 import { useLotes, setLotes } from '../store/lotes';
+import { modelarConectividad, heatmapDataURL, gradienteLeyenda } from '../lib/conectividad';
 
 // Spherical excess approximation (Chamberlain & Duquette) — good enough for field-sized polygons.
 export function areaHa(poly: LatLng[]): number {
@@ -79,14 +80,20 @@ const floating: CSSProperties = { position: 'absolute', zIndex: 1000, background
 export default function Mapa() {
   const lotes = useLotes();
   const [params, setParams] = useSearchParams();
-  const [selId, setSelId] = useState(() => (lotes[2] ?? lotes[0])?.id ?? '');
+  const [selId, setSelId] = useState(() => { const q = params.get('sel'); if (q === 'none') return ''; return lotes.find((l) => l.id === q)?.id ?? (lotes[2] ?? lotes[0])?.id ?? ''; });
   const [nombreEd, setNombreEd] = useState<string | null>(null);
   const usados = new Set(lotes.map((l) => l.name.split(' — ')[0].trim().toLowerCase()));
   let nLibre = 1;
   while (usados.has(`lote ${nLibre}`)) nLibre++;
   const nombre = nombreEd ?? `Lote ${nLibre}`;
   const setNombre = (v: string) => setNombreEd(v);
-  const [capa, setCapa] = useState({ ndvi: false, bosque: true, focos: true });
+  const [capa, setCapa] = useState(() => {
+    const q = params.get('capas');
+    const on = new Set((q ?? '').split(',').map((x) => x.trim()));
+    return { ndvi: false, parches: q === null || on.has('parches'), focos: true, rendimiento: on.has('rendimiento'), inundables: on.has('inundables'), conectividad: on.has('conectividad') };
+  });
+  const [legOpen, setLegOpen] = useState(false);
+  const modelo = useMemo(() => (capa.conectividad ? { ...modelarConectividad(), img: heatmapDataURL() } : null), [capa.conectividad]);
   const [modo, setModo] = useState<Modo>('view');
   const [draft, setDraft] = useState<LatLng[]>([]);
   const [selIdx, setSelIdx] = useState<number | null>(null);
@@ -146,7 +153,10 @@ export default function Mapa() {
 
   const capasUI = [
     { key: 'ndvi', label: 'NDVI (vigor vegetal)', color: '#1A9850' },
-    { key: 'bosque', label: 'Bosque nativo protegido', color: '#B8860B' },
+    { key: 'parches', label: 'Parches de bosque', color: '#B8860B' },
+    { key: 'rendimiento', label: 'Mapa de rendimiento', color: '#E4572E' },
+    { key: 'inundables', label: 'Zonas inundables', color: '#3B82F6' },
+    { key: 'conectividad', label: 'Conectividad (Circuitscape)', color: '#FF8C00' },
     { key: 'focos', label: 'Focos de calor (FIRMS)', color: '#EA580C' },
   ] as const;
 
@@ -177,11 +187,31 @@ export default function Mapa() {
       <section aria-label="Mapa satelital" className="mapa-map">
         <MapContainer center={establecimiento.center} zoom={14} style={{ position: 'absolute', inset: 0 }} className={modo === 'draw' ? 'mapa-drawing' : undefined}>
           <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Tiles © Esri" />
-          {capa.bosque && (
-            <Polygon positions={capas.bosqueNativo} pathOptions={{ color: '#FFD166', weight: 2, dashArray: '6 4', fillColor: '#FFD166', fillOpacity: 0.3 }} interactive={false}>
-              <Tooltip permanent direction="center">Bosque nativo · Cat. II</Tooltip>
-            </Polygon>
+          {modelo && (
+            <ImageOverlay url={modelo.img} opacity={0.75} interactive={false}
+              bounds={[[modelo.grid.bounds.sur, modelo.grid.bounds.oeste], [modelo.grid.bounds.norte, modelo.grid.bounds.este]]} />
           )}
+          {capa.rendimiento && zonasRendimiento.map((z, i) => (
+            <Polygon key={`r${i}`} positions={z.polygon} interactive={modo === 'view'}
+              pathOptions={{ color: z.nivel === 'bajo' ? '#E4572E' : '#F2C14E', weight: 1, fillColor: z.nivel === 'bajo' ? '#E4572E' : '#F2C14E', fillOpacity: 0.45 }}>
+              <Tooltip sticky>Rinde histórico {z.rindePct}%</Tooltip>
+            </Polygon>
+          ))}
+          {capa.inundables && zonasInundables.map((z) => (
+            <Polygon key={z.id} positions={z.polygon} interactive={modo === 'view'}
+              pathOptions={{ color: '#3B82F6', weight: 2, dashArray: '6 4', fillColor: '#3B82F6', fillOpacity: 0.4 }}>
+              <Tooltip sticky>{z.nombre} · zona inundable</Tooltip>
+            </Polygon>
+          ))}
+          {capa.parches && parchesBosque.map((p) => (
+            <Polygon key={p.id} positions={p.polygon} interactive={modo === 'view'}
+              pathOptions={{ color: '#FFD166', weight: 2, dashArray: '6 4', fillColor: '#2E8B3D', fillOpacity: 0.5 }}>
+              <Tooltip sticky>{p.nombre} · {fmtHa(p.ha)} ha</Tooltip>
+            </Polygon>
+          ))}
+          {modelo && modelo.corredores.map((c, i) => (
+            <Polyline key={`c${i}`} positions={c} interactive={false} pathOptions={{ color: '#FFD166', weight: 6, dashArray: '10 8', lineCap: 'round' }} />
+          ))}
           {capa.focos && capas.focosCalor.map((p, i) => (
             <CircleMarker key={i} center={p} radius={8} interactive={modo === 'view'} pathOptions={{ color: '#fff', weight: 2, fillColor: '#F97316', fillOpacity: 1 }}>
               <Tooltip>Foco de calor (NASA FIRMS)</Tooltip>
@@ -236,8 +266,21 @@ export default function Mapa() {
           ))}
         </fieldset>
 
-        {modo === 'view' && sel && (
-          <div aria-live="polite" className="mapa-sel" style={{ ...floating, borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {modo === 'view' && (
+        <div className="mapa-stack">
+        {modelo && (
+          <div className="mapa-leyenda" role="group" aria-label="Leyenda de conectividad">
+            <button type="button" className="mapa-leyenda-head" aria-expanded={legOpen} onClick={() => setLegOpen((o) => !o)}>
+              <strong>Conectividad ecológica · Circuitscape</strong>
+              <span aria-hidden="true">{legOpen ? '−' : '+'}</span>
+            </button>
+            <div className="mapa-leyenda-bar"><span>baja</span><i style={{ background: gradienteLeyenda }} /><span>alta</span></div>
+            {legOpen && <p>Teoría de circuitos entre 3 parches de bosque · corredor sugerido sobre zonas de bajo rinde</p>}
+            <p className="mono">{modelo.metricas.celdas.toLocaleString('es-AR')} celdas · {modelo.metricas.pares} pares · {modelo.metricas.ms} ms</p>
+          </div>
+        )}
+        {sel && (
+          <div aria-live="polite" className="mapa-sel" style={{ ...floating, position: 'static', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
               <strong style={{ fontSize: 16 }}>{sel.name}</strong>
               <span className="muted" style={{ fontSize: 13 }}>{sel.ha.toLocaleString('es-AR')} ha · {sel.crop}</span>
@@ -261,6 +304,8 @@ export default function Mapa() {
               </>
             )}
           </div>
+        )}
+        </div>
         )}
 
         {modo !== 'view' && (

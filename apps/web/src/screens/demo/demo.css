@@ -1,0 +1,67 @@
+/* /demo stage — Syntra Instagram palette: deep navy, white type, leaf green accent. */
+.demo-root { position: fixed; inset: 0; background: #070b2a; overflow: hidden; cursor: default; }
+.demo-stage {
+  position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(123, 197, 154, 0.16), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(80, 110, 255, 0.18), transparent 55%),
+    linear-gradient(160deg, #0d1240 0%, #0a0e33 60%, #070b2a 100%);
+  color: #fff; font-family: 'Inter', system-ui, sans-serif; overflow: hidden;
+}
+/* dotted texture like the Instagram posts */
+.demo-stage::before {
+  content: ''; position: absolute; left: 0; top: 0; width: 360px; height: 260px; opacity: 0.35;
+  background-image: radial-gradient(rgba(255,255,255,0.55) 1.2px, transparent 1.3px); background-size: 14px 14px;
+  mask-image: linear-gradient(135deg, #000 0%, transparent 75%);
+}
+.demo-stage::after {
+  content: ''; position: absolute; right: 0; bottom: 0; width: 420px; height: 300px; opacity: 0.3;
+  background-image: radial-gradient(rgba(255,255,255,0.55) 1.2px, transparent 1.3px); background-size: 14px 14px;
+  mask-image: linear-gradient(315deg, #000 0%, transparent 75%);
+}
+
+.demo-head { position: absolute; top: 48px; left: 72px; right: 72px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+.demo-brand { display: flex; align-items: center; gap: 14px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 38px; letter-spacing: 1px; }
+.demo-step { display: flex; align-items: center; gap: 16px; animation: demo-in 0.5s ease both; }
+.demo-step-n { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #7bc59a; border: 1.5px solid rgba(123,197,154,0.6); border-radius: 999px; padding: 6px 16px; }
+.demo-step-t { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; }
+
+.demo-phone {
+  position: absolute; left: 50%; top: 116px; width: 414px; height: 868px; transform: translateX(-50%);
+  border-radius: 56px; padding: 12px; background: #11163f; z-index: 2;
+  box-shadow: 0 0 0 2px #2b3170, 0 30px 80px rgba(0,0,0,0.55), 0 0 120px rgba(123,197,154,0.15);
+}
+.demo-phone iframe { width: 390px; height: 844px; border: 0; border-radius: 44px; background: #f5f6f1; display: block; }
+.demo-notch { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 28px; border-radius: 20px; background: #0b0f33; z-index: 3; pointer-events: none; }
+
+.demo-col { position: absolute; top: 300px; width: 520px; display: flex; flex-direction: column; gap: 28px; z-index: 2; }
+.demo-izq { left: 150px; align-items: flex-end; text-align: right; }
+.demo-der { right: 150px; align-items: flex-start; }
+.demo-card {
+  width: 440px; padding: 26px 30px; border-radius: 22px; display: flex; flex-direction: column; gap: 8px;
+  background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+  opacity: 0; animation: demo-card 0.6s cubic-bezier(.2,.8,.2,1) both;
+}
+.demo-izq .demo-card { align-items: flex-end; }
+.demo-card-tag { font-family: 'JetBrains Mono', monospace; font-size: 17px; text-transform: uppercase; letter-spacing: 1.5px; color: #7bc59a; }
+.demo-card strong { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; line-height: 1.1; }
+.demo-card span:last-child { font-size: 22px; color: #c9cff5; line-height: 1.35; }
+
+.demo-frase { position: absolute; left: 0; right: 0; bottom: 66px; margin: 0; text-align: center; font-size: 30px; font-weight: 500; color: #e7eaff; z-index: 2; animation: demo-in 0.6s 0.4s ease both; }
+
+.demo-progress { position: absolute; left: 72px; right: 72px; bottom: 34px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); z-index: 2; }
+.demo-progress span { display: block; height: 100%; border-radius: 3px; background: #7bc59a; transition: width 0.1s linear; }
+
+.demo-outro { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 120px; z-index: 2; animation: demo-in 0.7s ease both; }
+.demo-outro-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 76px; line-height: 1.05; margin: 0 0 28px; max-width: 760px; }
+.demo-outro-text h1 em { font-style: normal; color: #7bc59a; }
+.demo-outro-text p { margin: 0 0 8px; font-size: 30px; color: #c9cff5; }
+.demo-outro-text strong { font-family: 'JetBrains Mono', monospace; font-size: 38px; }
+.demo-outro-qr { padding: 22px; border-radius: 24px; background: #fff; }
+.demo-outro-qr img { display: block; }
+
+.demo-start { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(7,11,42,0.55); font-size: 40px; font-weight: 600; z-index: 5; cursor: pointer; }
+
+@keyframes demo-card { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes demo-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .demo-card, .demo-step, .demo-frase, .demo-outro { animation: none; opacity: 1; } }

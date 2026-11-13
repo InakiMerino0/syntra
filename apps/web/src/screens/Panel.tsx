@@ -4,8 +4,8 @@ import HashTodo from '../components/HashTodo';
 import { useLotes } from '../store/lotes';
 import { ecorregion, establecimiento, kpis, ejes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
 
-const rtrs = certificaciones.find((c) => c.id === 'rtrs')!;
-const count = (s: string) => rtrs.items.filter((i) => i.status === s).length;
+const cert = certificaciones.find((c) => c.id === 'fsa')!;
+const count = (s: string) => cert.items.filter((i) => i.status === s).length;
 const fmtHa = (n: number) => n.toLocaleString('es-AR', { maximumFractionDigits: 1 });
 const corredoresHa = fmtHa(corredores.reduce((sum, c) => sum + c.ha, 0));
 const corredoresImplantadasHa = fmtHa(corredores.filter((c) => c.status === 'Implantado').reduce((sum, c) => sum + c.ha, 0));
@@ -49,15 +49,15 @@ export default function Panel() {
       <section aria-labelledby="obj" className="card-dark row" style={{ gap: 24, alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px' }}>
         <div className="stack" style={{ gap: 6, flex: '1 1 320px' }}>
           <span id="obj" style={sub}>Certificación objetivo</span>
-          <strong className="display" style={big}>RTRS · soja responsable</strong>
+          <strong className="display" style={big}>FSA · producción agrícola sustentable</strong>
           <span style={subLight}>
-            {count('ok')} de {rtrs.items.length} {count('ok') === 1 ? 'requisito cumplido' : 'requisitos cumplidos'} en el Lote 3 · {plural(count('bad'), 'mejora necesaria', 'mejoras necesarias')} de biodiversidad · {plural(count('warn'), 'dato faltante', 'datos faltantes')}
+            {count('ok')} de {cert.items.length} {count('ok') === 1 ? 'requisito cumplido' : 'requisitos cumplidos'} en el Lote 3 · {plural(count('bad'), 'mejora necesaria', 'mejoras necesarias')} de biodiversidad · {plural(count('warn'), 'dato faltante', 'datos faltantes')}
           </span>
         </div>
         <div className="stack" style={{ gap: 6, flex: '1 1 240px' }}>
           <span style={sub}>Plan de corredores</span>
           <strong className="display" style={big}>{corredoresHa} ha · {corredores.length} corredores</strong>
-          <span style={subLight}>{corredoresImplantadasHa} ha ya implantada · biodiversidad {bio.actual} → {bio.proyectado} · rinde {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
+          <span style={subLight}>{corredoresImplantadasHa} ha ya implantada · biodiversidad {bio.actual} → {bio.proyectado} · masa de semilla de {bio.rinde.cultivo} +{bio.rinde.pct}%*</span>
         </div>
         <Link to="/lote/l3" className="btn btn-accent" style={{ minHeight: 48, fontSize: 15 }}>Ver mejoras necesarias</Link>
       </section>
@@ -125,7 +125,7 @@ export default function Panel() {
               <span className="muted" style={{ fontSize: 14 }}>/ 100 · +4 vs campaña anterior</span>
             </div>
             <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-              Promedio ponderado por superficie. Con los corredores sugeridos el Lote 3 sube a {bio.proyectado}. *Rinde según estudios del equipo [FUENTE A CITAR].
+              Promedio ponderado por superficie. Con los corredores sugeridos el Lote 3 sube a {bio.proyectado}. *Soja: +31% de masa de semilla con polinizadores (Galetto et al. 2026, Agroforestry Systems 100:51).
             </p>
           </section>
 

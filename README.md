@@ -50,7 +50,7 @@ Otras herramientas miden o reportan; Syntra además te dice qué hacer en tu cam
 
 Ser el puente entre el productor y la certificación para exportar: traducir lo que exige cada estándar en acciones concretas en el campo, acompañar el proceso y llevar al productor hasta la certificación.
 
-> Pendiente antes del pitch: citar fuente de los datos de rinde y de mercado; verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques; confirmar ecorregión (Chaco Seco) y especies nativas recomendadas para Río Seco; rango de cobertura forestal mínima de la Ley Agroforestal (2–5%).
+> Pendiente antes del pitch: los datos de rinde ya citan Galetto et al. 2026 y Amarilla et al. 2025 (falta citar fuente de mercado); verificar fechas vigentes de aplicación de EUDR y número de ley provincial de bosques; confirmar ecorregión (Chaco Seco) y especies nativas recomendadas para Río Seco; rango de cobertura forestal mínima de la Ley Agroforestal (2–5%).
 
 **Frase guía:** *Ayudamos a productores y agroexportadores a acceder a mercados internacionales mediante una plataforma que adapta sus parámetros a cada certificación y les indica cómo incorporar biodiversidad para cumplirla.*
 
@@ -62,7 +62,7 @@ React + Vite, sin backend. Todo con datos mock salvo el mapa y los polígonos. E
 
 1. **Landing / login** — propuesta de valor + botón "Entrar como productor demo" (sin auth real).
 2. **Dashboard del establecimiento** — campo, hectáreas, nº de lotes; 4 tarjetas de cumplimiento por eje (semáforo + %); índice de biodiversidad global; timeline de últimos eventos firmados.
-3. **Mapa y lotes** — mapa satelital full screen con dibujo/edición de polígonos; panel lateral con lotes (nombre, cultivo, ha, estado); capas toggle: NDVI, bosque nativo protegido, focos de calor; CTA "Analizar y certificar lote".
+3. **Mapa y lotes** — mapa satelital full screen con dibujo/edición de polígonos; panel lateral con lotes (nombre, cultivo, ha, estado); capas toggle: NDVI, parches de bosque, focos de calor; CTA "Analizar y certificar lote".
 4. **Procesamiento** — stepper animado: imágenes Sentinel-2 → índices → biodiversidad → hash → anclaje blockchain → listo.
 5. **Detalle del lote** — tabs:
    - *Satélite*: antes/después (2020 vs hoy) + serie temporal NDVI.

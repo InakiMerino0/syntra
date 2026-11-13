@@ -2,6 +2,7 @@
 // Given a target certification + the establishment data, it decides which field actions close each gap.
 // Rules are intentionally simple and data-driven so the demo shows *why* each action was chosen.
 import { biodiversidadLote3, capas, certificaciones, corredores, ecorregion, establecimiento, eventos, lotes, monitoreos, ndviSerie, tiposAccion } from './index';
+import { parchesBosque } from './capas';
 import type { Certificacion, Corredor, Lote, Requisito } from './index';
 
 export type Prioridad = 'alta' | 'media' | 'baja';
@@ -41,7 +42,7 @@ export interface ResumenPlan {
   haImplantar: number;
   bioActual: number;
   bioProyectada: number;
-  rinde: { cultivo: string; pct: number; fuente: string } | null;
+  rinde: { cultivo: string; metrica: string; pct: number; fuente: string } | null;
   porPrioridad: Record<Prioridad, number>;
 }
 
@@ -67,7 +68,7 @@ function lotesEnAlcance(cert: Certificacion): Lote[] {
   return cert.id === 'rtrs' ? lotes.filter((l) => l.crop.toLowerCase() === 'soja') : lotes;
 }
 
-/** Lots whose diagnosis mentions native forest on the border (Lote 3 & 4 in the mock). */
+/** Lots whose diagnosis mentions a forest patch on the border (Lote 3 & 4 in the mock). */
 const lindaConMonte = (l: Lote) => /bosque|monte/i.test(l.note);
 
 /** Corridor letters named in a requirement's fix text ("corredores A y B"). */
@@ -105,13 +106,24 @@ export function generarPlan(certId: string): Plan {
   };
   const regla = (id: string, si: string, entonces: string) => { if (!reglas.some((r) => r.id === id)) reglas.push({ id, si, entonces }); };
 
+  const addPlanBio = (req: Requisito) => {
+    regla('R2', 'Falta el plan de manejo de biodiversidad', 'aprobar el borrador que genera Syntra con el diagnóstico');
+    add({
+      titulo: 'Revisar y aprobar el plan de manejo de biodiversidad',
+      detalle: `Borrador generado con el diagnóstico (${biodiversidadLote3.actual}/100) y los corredores elegidos. Lo firmás y queda anclado.`,
+      lote: short(lote3), requisito: req.rule, prioridad: 'alta', plazo: 'Esta semana',
+      esfuerzo: '30 min de lectura', impacto: 'completa el requisito', link: `/lote/${lote3.id}`, linkLabel: 'Ver diagnóstico del lote →',
+      porQue: `Requisito en "Mejora necesaria" (${req.evidence}). El algoritmo ya tiene los datos para redactarlo: solo falta tu aprobación.`,
+    });
+  };
+
   for (const req of cert.items) {
     const rule = req.rule;
     if (req.status === 'ok') continue;
 
     // R1 — biodiversity / native vegetation gap → corridors that connect the lot with the native forest.
     if (req.status === 'bad' && /vegetación nativa|biodiversidad|cobertura forestal/i.test(rule) && !/plan de manejo/i.test(rule)) {
-      regla('R1', 'Mejora necesaria en vegetación nativa / biodiversidad + lote lindero a monte nativo', 'corredores biológicos que conecten el lote con el monte');
+      regla('R1', 'Mejora necesaria en vegetación nativa / biodiversidad + lote lindero a parches de bosque', 'corredores biológicos que conecten los parches de bosque');
       const lista = corredoresDe(req);
       for (const [i, c] of lista.entries()) {
         corredoresPlan.set(c.id, c);
@@ -129,21 +141,28 @@ export function generarPlan(certId: string): Plan {
           tipo: 'corredor',
           porQue: enBajo
             ? `Mejora necesaria "${rule}" (evidencia: ${req.evidence}). La zona tiene NDVI bajo (mín. ${fmt(ndviMin, 2)}): se resigna poco rinde y suma heterogeneidad.`
-            : `Mejora necesaria "${rule}" (evidencia: ${req.evidence}) + ${short(lote3)} linda con monte nativo al este → el corredor conecta el lote con el monte.`,
+            : `Mejora necesaria "${rule}" (evidencia: ${req.evidence}) + ${short(lote3)} linda con un parche de bosque al este → el corredor conecta el lote con los parches de bosque.`,
         });
       }
+      if (/plan/i.test(rule)) addPlanBio(req);
       continue;
     }
 
     // R2 — missing biodiversity management plan → Syntra drafts it from the diagnosis.
     if (/plan de manejo/i.test(rule)) {
-      regla('R2', 'Falta el plan de manejo de biodiversidad', 'aprobar el borrador que genera Syntra con el diagnóstico');
+      addPlanBio(req);
+      continue;
+    }
+
+    // R9 — social / labor conditions (FSA) → upload the staff training record.
+    if (/laboral|capacitaci|comunidad/i.test(rule)) {
+      regla('R9', 'Falta evidencia social (capacitaciones del personal)', 'cargar el registro de capacitaciones');
       add({
-        titulo: 'Revisar y aprobar el plan de manejo de biodiversidad',
-        detalle: `Borrador generado con el diagnóstico (${biodiversidadLote3.actual}/100) y los corredores elegidos. Lo firmás y queda anclado.`,
-        lote: short(lote3), requisito: rule, prioridad: 'alta', plazo: 'Esta semana',
-        esfuerzo: '30 min de lectura', impacto: 'completa el requisito', link: `/lote/${lote3.id}`, linkLabel: 'Ver diagnóstico del lote →',
-        porQue: `Requisito en "Mejora necesaria" (${req.evidence}). El algoritmo ya tiene los datos para redactarlo: solo falta tu aprobación.`,
+        titulo: 'Cargar el registro de capacitaciones del personal',
+        detalle: 'Planilla o foto de las capacitaciones de seguridad y manejo de agroquímicos del personal del establecimiento.',
+        lote: 'Todos', requisito: rule, prioridad: 'media', plazo: 'Este mes',
+        esfuerzo: '10 min (PDF o foto)', impacto: 'completa dato social',
+        porQue: `Requisito "Falta dato" (${req.evidence}). Es documental y no depende del campo.`,
       });
       continue;
     }
@@ -166,7 +185,7 @@ export function generarPlan(certId: string): Plan {
       regla('R3', 'No hay registros de aplicaciones fitosanitarias en la trazabilidad', 'registrar cada aplicación con ubicación y producto');
       add({
         titulo: 'Registrar las aplicaciones fitosanitarias de la campaña',
-        detalle: 'Producto, dosis, fecha y ubicación de cada aplicación. Syntra calcula la distancia a monte y zonas sensibles.',
+        detalle: 'Producto, dosis, fecha y ubicación de cada aplicación. Syntra calcula la distancia a los parches de bosque y zonas sensibles.',
         lote: alcance.map(short).join(', '), requisito: rule, prioridad: req.status === 'bad' ? 'alta' : 'media', plazo: 'Esta semana',
         esfuerzo: '10 min por aplicación', impacto: 'completa dato', tipo: 'fito',
         porQue: `Requisito "Falta dato" y ${hayFito ? 'hay' : '0'} registros de "${tipoLabel('fito')}" en la trazabilidad. Sin ellos el auditor no puede verificar distancias.`,
@@ -202,13 +221,13 @@ export function generarPlan(certId: string): Plan {
 
     // R6 — new lots must be checked against the OTBN layer → analyze + overlay with native forest.
     if (/lotes nuevos|otbn/i.test(rule) && sinAnalizar.length) {
-      regla('R6', 'Lote sin analizar que linda con bosque nativo', 'analizar y verificar superposición con la capa de bosque');
+      regla('R6', 'Lote sin analizar que linda con un parche de bosque', 'analizar y verificar superposición con la capa de bosque');
       for (const l of sinAnalizar) add({
-        titulo: `Analizar ${short(l)} y verificar superposición con bosque nativo`,
+        titulo: `Analizar ${short(l)} y verificar superposición con parches de bosque`,
         detalle: `${l.ha} ha de ${l.crop.toLowerCase()}. Corre el análisis satelital y cruza el polígono con la capa OTBN.`,
         lote: short(l), requisito: rule, prioridad: 'alta', plazo: 'Esta semana',
         esfuerzo: '2 min (automático)', impacto: 'cierra requisito', link: `/procesando/${l.id}`,
-        porQue: `${short(l)} está "${l.status}" y ${lindaConMonte(l) ? 'linda con monte nativo' : 'no tiene diagnóstico'}: no se puede afirmar que no hubo desmonte.`,
+        porQue: `${short(l)} está "${l.status}" y ${lindaConMonte(l) ? 'linda con un parche de bosque' : 'no tiene diagnóstico'}: no se puede afirmar que no hubo desmonte.`,
       });
       continue;
     }
@@ -244,7 +263,7 @@ export function generarPlan(certId: string): Plan {
     regla('X1', `Lote "${l.status}" dentro del alcance`, 'analizarlo antes de incluirlo en la certificación');
     add({
       titulo: `Analizar ${short(l)} antes de incluirlo`,
-      detalle: `${short(l)} es nuevo y ${lindaConMonte(l) ? 'linda con monte nativo' : 'no tiene diagnóstico'}. Sin análisis queda fuera del alcance.`,
+      detalle: `${short(l)} es nuevo y ${lindaConMonte(l) ? 'linda con un parche de bosque' : 'no tiene diagnóstico'}. Sin análisis queda fuera del alcance.`,
       lote: short(l), requisito: null, prioridad: 'media', plazo: 'Esta semana',
       esfuerzo: '2 min (automático)', impacto: 'amplía alcance', link: `/procesando/${l.id}`,
       porQue: `Estado del lote: "${l.status}". ${l.note}`,
@@ -294,14 +313,14 @@ export function generarPlan(certId: string): Plan {
     { label: 'Estado de los requisitos', valor: `${ok} ${ok === 1 ? 'cumple' : 'cumplen'} · ${bad} ${bad === 1 ? 'mejora necesaria' : 'mejoras necesarias'} · ${warn} ${warn === 1 ? 'dato faltante' : 'datos faltantes'}`, fuente: 'Diagnóstico de hoy 14:32' },
     { label: 'Lotes en alcance', valor: `${alcance.map(short).join(', ')} (${alcance.reduce((s, l) => s + l.ha, 0)} ha)`, fuente: cert.id === 'rtrs' ? 'Solo lotes de soja' : 'Polígonos firmados' },
     { label: 'Lotes sin analizar', valor: sinAnalizar.length ? sinAnalizar.map((l) => `${short(l)} (${l.ha} ha)`).join(', ') : 'Ninguno', fuente: 'Mapa y lotes' },
-    { label: 'Lotes linderos a monte nativo', valor: linderos.map(short).join(', ') || 'Ninguno', fuente: `Capa de bosque nativo (${capas.bosqueNativo.length} vértices)` },
+    { label: 'Lotes linderos a parches de bosque', valor: linderos.map(short).join(', ') || 'Ninguno', fuente: `Capa de parches de bosque (${parchesBosque.length} parches · ${fmt(parchesBosque.reduce((t, p) => t + p.ha, 0))} ha)` },
     { label: `Biodiversidad ${short(lote3)}`, valor: `${biodiversidadLote3.actual}/100`, fuente: 'Syntra · algoritmo v0.3' },
     { label: 'Corredores', valor: corredores.map((c) => `${c.id} ${c.status.toLowerCase()}`).join(' · '), fuente: 'Plan de corredores 12/11/2026' },
     { label: 'Ecorregión', valor: ecorregion.nombre, fuente: ecorregion.fuenteDatos },
     ...(borde && centro ? [{ label: `Monitoreo de campo (${fechaMon})`, valor: `Polinizadores borde vs centro: ${borde.polinizadores} vs ${centro.polinizadores} · enemigos naturales ${borde.enemigosNaturales} vs ${centro.enemigosNaturales}`, fuente: 'Monitoreo de campo + satélite' }] : []),
     { label: 'NDVI última campaña', valor: `mín. ${fmt(ndviMin, 2)} · máx. ${fmt(ndviMax, 2)}`, fuente: 'Sentinel-2 L2A' },
     { label: 'Registros de campo', valor: `${prodRegs.length} intervenciones · fitosanitarios ${hayFito ? '✓' : '0'} · fertilización ${hayFert ? '✓' : '0'} · cosecha ${hayCosecha ? '✓' : '0'}`, fuente: 'Trazabilidad (blockchain)' },
-    { label: 'Focos de calor', valor: `${capas.focosCalor.length} en el monte lindero, 0 en lotes`, fuente: 'NASA FIRMS' },
+    { label: 'Focos de calor', valor: `${capas.focosCalor.length} en parches de bosque linderos, 0 en lotes`, fuente: 'NASA FIRMS' },
   ];
 
   return {

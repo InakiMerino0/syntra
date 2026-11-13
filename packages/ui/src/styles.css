@@ -235,3 +235,17 @@ table.table td { padding: 12px 8px; border-bottom: 1px solid var(--line-soft); }
   .mapa-editbar .mapa-sel-actions { flex-wrap: wrap; }
   .mapa-editbar .mapa-sel-actions > .btn { flex: 1 1 28%; }
 }
+
+/* Mapa: capas y conectividad */
+.mapa-stack { position: absolute; z-index: 1000; left: 16px; right: 16px; bottom: 24px; max-width: 420px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.mapa-stack > * { pointer-events: auto; }
+.mapa-stack .mapa-sel { max-width: none; }
+.mapa-leyenda { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); padding: 4px 12px 8px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink); }
+.mapa-leyenda p { margin: 0; line-height: 1.4; color: var(--muted); }
+.mapa-leyenda-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 13px; color: var(--ink); text-align: left; cursor: pointer; }
+.mapa-leyenda-bar { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.mapa-leyenda-bar i { flex: 1; height: 10px; border-radius: 5px; border: 1px solid var(--line); }
+@media (max-width: 900px) {
+  .mapa-stack { left: 8px; right: 8px; bottom: 20px; max-width: none; }
+  .mapa-leyenda-head { min-height: 36px; }
+}

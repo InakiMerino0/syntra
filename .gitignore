@@ -3,3 +3,10 @@ dist
 *.log
 .DS_Store
 .vercel
+syntra-informe-evidencia-ejemplo.pdf
+
+# Material del equipo (no es software)
+data-IA/
+papers/
+pitch/
+syntra-informe-evidencia-ejemplo.pdf

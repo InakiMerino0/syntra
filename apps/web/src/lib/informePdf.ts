@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import {
   establecimiento, ecorregion, certificaciones, ejes, corredores, biodiversidadLote3, monitoreos,
-  seguimientoCorredores, eventos, capas, ndviSerie, reqLabel,
+  seguimientoCorredores, eventos, capas, parchesBosque, zonasRendimiento, zonasInundables, ndviSerie, reqLabel,
 } from '@synta/data';
 import type { Lote, LatLng, ReqStatus } from '@synta/data';
 import { INFORME_NOMBRE, RED_SELLADO, URL_VERIFICACION } from './informe';
@@ -44,8 +44,8 @@ function fechaCorta(iso: string): string {
 
 // ---------- Evidence ----------
 
-export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'rtrs') => {
-  const cert = certificaciones.find((c) => c.id === certId) ?? certificaciones.find((c) => c.id === 'rtrs') ?? certificaciones[0];
+export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fsa') => {
+  const cert = certificaciones.find((c) => c.id === certId) ?? certificaciones.find((c) => c.id === 'fsa') ?? certificaciones[0];
   const emitido = new Date().toISOString();
   const totalHa = lotes.reduce((s, l) => s + l.ha, 0);
 
@@ -68,11 +68,13 @@ export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'rt
     { archivo: 'lotes.geojson', descripcion: `Polígonos georreferenciados de ${lotes.length} lotes`, contenido: geojson },
     {
       archivo: 'analisis-satelital.json',
-      descripcion: 'NDVI, cobertura, bosque nativo y focos de calor',
+      descripcion: 'NDVI, cobertura, parches de bosque y focos de calor',
       contenido: {
         fuente: 'Sentinel-2 L2A (Copernicus) · NASA FIRMS',
         ndviSerie2024_2026: ndviSerie,
-        bosqueNativo: capas.bosqueNativo,
+        parchesBosque,
+        zonasRendimiento,
+        zonasInundables,
         focosCalor: capas.focosCalor,
         cambioCobertura2020_2026_ha: 0,
         superficieTotalHa: totalHa,
@@ -237,10 +239,10 @@ class Pdf {
   }
 }
 
-/** Draws lots, native forest and corridors as vector lines inside a box. */
+/** Draws lots, forest patches and corridors as vector lines inside a box. */
 function dibujarMapa(p: Pdf, lotes: Lote[], x0: number, y0: number, bw: number, bh: number) {
   const d = p.doc;
-  const puntos: LatLng[] = [...lotes.flatMap((l) => l.polygon), ...capas.bosqueNativo, ...corredores.flatMap((c) => c.line)];
+  const puntos: LatLng[] = [...lotes.flatMap((l) => l.polygon), ...parchesBosque.flatMap((b) => b.polygon), ...corredores.flatMap((c) => c.line)];
   const lats = puntos.map((q) => q[0]), lngs = puntos.map((q) => q[1]);
   const minLat = Math.min(...lats), maxLat = Math.max(...lats), minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
   const kx = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180); // lng degrees shrink with latitude
@@ -258,7 +260,7 @@ function dibujarMapa(p: Pdf, lotes: Lote[], x0: number, y0: number, bw: number, 
     return q;
   };
 
-  poligono(capas.bosqueNativo, [0x9f, 0xc4, 0xad], C.verde, 0.5);
+  parchesBosque.forEach((b) => poligono(b.polygon, [0x9f, 0xc4, 0xad], C.verde, 0.5));
   lotes.forEach((l) => {
     const q = poligono(l.polygon, [0xe8, 0xf1, 0xe3], C.primary, 0.4);
     const cx = q.reduce((a, b) => a + b[0], 0) / q.length, cy = q.reduce((a, b) => a + b[1], 0) / q.length;
@@ -288,7 +290,7 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   // Title block
   p.font('bold', 20, false, C.ink); d.text(t(INFORME_NOMBRE), M, p.y + 6); p.y += 11;
   p.font('normal', 10.5, false, C.primary); d.text(t(`Para certificación ${ev.certObjetivo} · con sello de integridad`), M, p.y + 3); p.y += 8;
-  p.paragraph('Syntra deja constancia de que los datos técnicos y la evidencia recogidos en este informe constituyen el registro fiel e inalterable del establecimiento a la fecha de emisión. Syntra no otorga la certificación: acompaña al productor y entrega a la entidad certificadora evidencia verificable.', M, W - 2 * M, { size: 9.5 });
+  p.paragraph('Syntra deja constancia de que los datos técnicos y la evidencia recogidos en este informe constituyen el registro fiel e inalterable del establecimiento a la fecha de emisión. Syntra no otorga la certificación: acompaña al productor y entrega a la entidad certificadora evidencia verificable. Listo para revisión del perito/auditor de la certificadora.', M, W - 2 * M, { size: 9.5 });
   p.y += 2;
   p.paragraph('Huella raíz: ' + s.raizMerkle, M, W - 2 * M, { size: 8, mono: true, bold: true });
   p.y += 1;
@@ -361,7 +363,7 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   // Legend
   let lx = M;
   const leyenda: { txt: string; kind: 'lote' | 'bosque' | 'impl' | 'plan' }[] = [
-    { txt: 'Lotes', kind: 'lote' }, { txt: 'Bosque nativo', kind: 'bosque' }, { txt: 'Corredor implantado', kind: 'impl' }, { txt: 'Corredor planificado', kind: 'plan' },
+    { txt: 'Lotes', kind: 'lote' }, { txt: 'Parches de bosque', kind: 'bosque' }, { txt: 'Corredor implantado', kind: 'impl' }, { txt: 'Corredor planificado', kind: 'plan' },
   ];
   leyenda.forEach((it) => {
     if (it.kind === 'lote') { d.setFillColor(0xe8, 0xf1, 0xe3); d.setDrawColor(...C.primary); d.setLineWidth(0.4); d.rect(lx, p.y, 5, 3, 'FD'); }

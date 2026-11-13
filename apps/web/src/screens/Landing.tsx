@@ -4,7 +4,7 @@ import { Logo } from '@synta/ui';
 
 const STEPS = [
   { n: '01', title: 'Mapeá tus lotes', text: 'Dibujá los polígonos sobre imagen satelital.' },
-  { n: '02', title: 'Elegí tu certificación', text: 'RTRS, EUDR, ISCC: ves qué cumplís y qué mejoras necesitás.' },
+  { n: '02', title: 'Elegí tu certificación', text: 'FSA, EUDR, ISCC: ves qué cumplís y qué mejoras necesitás.' },
   { n: '03', title: 'Implementá mejoras con biodiversidad', text: 'Corredores biológicos recomendados y evidencia firmada para el certificador.' },
 ];
 

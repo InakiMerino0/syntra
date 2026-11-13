@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { MapContainer, Polygon, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Badge, ProgressBar } from '@synta/ui';
-import { biodiversidadLote3 as bio, capas, certificaciones, corredores, ecorregion, eventos, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
+import { biodiversidadLote3 as bio, capas, parchesBosque, certificaciones, corredores, ecorregion, eventos, monitoreos, ndviSerie, reqLabel, seguimientoCorredores } from '@synta/data';
 import type { Lote as LoteT, Certificacion as CertT } from '@synta/data';
 import { useLote, LOTE_CON_DIAGNOSTICO } from '../store/lotes';
 
@@ -81,7 +81,7 @@ function LoteDetalle({ lote }: { lote: LoteT }) {
 }
 
 function Certificacion({ kind, onBio }: { kind: Kind; onBio: () => void }) {
-  const [certId, setCertId] = useState('rtrs');
+  const [certId, setCertId] = useState('fsa');
   const base = certificaciones.find((c) => c.id === certId)!;
   const evid = ['polígono firmado', 'cambio de cobertura 2020–2026: 0 ha', 'registros firmados en la trazabilidad'];
   const cert: CertT = kind === 'cert'
@@ -154,10 +154,10 @@ function Biodiversidad({ lote, kind }: { lote: LoteT; kind: Kind }) {
   return (
     <div className="row" style={{ alignItems: 'flex-start' }}>
       <figure className="card" style={{ flex: '3 1 480px', minWidth: 0, margin: 0, padding: 0, overflow: 'hidden' }}>
-        <div role="img" aria-label={conLineas ? `${lote.name} con ${corredores.length} corredores biológicos sugeridos que lo conectan con el monte nativo al este` : `${lote.name}; los corredores sugeridos están en el informe`}>
-          <MapContainer key={lote.id} bounds={conLineas ? [...lote.polygon, ...capas.bosqueNativo] : lote.polygon} scrollWheelZoom={false} className="lote-map">
+        <div role="img" aria-label={conLineas ? `${lote.name} con ${corredores.length} corredores biológicos sugeridos que lo conectan con los parches de bosque` : `${lote.name}; los corredores sugeridos están en el informe`}>
+          <MapContainer key={lote.id} bounds={conLineas ? [...lote.polygon, ...parchesBosque.flatMap((b) => b.polygon)] : lote.polygon} scrollWheelZoom={false} className="lote-map">
             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Tiles © Esri" />
-            {conLineas && <Polygon positions={capas.bosqueNativo} pathOptions={{ color: '#2e4a26', fillColor: '#2e4a26', fillOpacity: 0.7 }} />}
+            {conLineas && parchesBosque.map((b) => <Polygon key={b.id} positions={b.polygon} pathOptions={{ color: '#2e4a26', fillColor: '#2e4a26', fillOpacity: 0.7 }} />)}
             <Polygon positions={lote.polygon} pathOptions={{ color: '#fff', weight: 2, fillOpacity: 0.05 }} />
             {conLineas && corredores.map((c) => (
               <Polyline key={c.id} positions={c.line} pathOptions={{ color: '#FFD166', weight: 10, opacity: 0.9 }}>
@@ -170,7 +170,7 @@ function Biodiversidad({ lote, kind }: { lote: LoteT; kind: Kind }) {
           {conLineas ? (
             <>
               <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('var(--corridor)')}Corredor sugerido</span>
-              <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('#2e4a26')}Monte nativo existente</span>
+              <span className="row" style={{ gap: 8, alignItems: 'center' }}>{swatch('#2e4a26')}Parches de bosque</span>
               <span className="muted">Total 4,2 ha · 4,9% del lote</span>
             </>
           ) : (
@@ -194,8 +194,9 @@ function Biodiversidad({ lote, kind }: { lote: LoteT; kind: Kind }) {
           ))}
         </div>
         <div style={{ background: 'var(--primary-soft)', color: 'var(--primary-ink)', borderRadius: 12, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <strong style={{ fontSize: 15 }}>Rinde estimado en {bio.rinde.cultivo}: +{bio.rinde.pct}%</strong>
-          <span style={{ fontSize: 13, lineHeight: 1.45 }}>Fuente: {bio.rinde.fuente}.</span>
+          <strong style={{ fontSize: 15 }}>{bio.rinde.metrica[0].toUpperCase() + bio.rinde.metrica.slice(1)} de {bio.rinde.cultivo} +{bio.rinde.pct}%*</strong>
+          <span style={{ fontSize: 13, lineHeight: 1.45 }}>*Con polinizadores; el beneficio crece con el bosque cercano y cae con la distancia al borde.</span>
+          <span style={{ fontSize: 12, lineHeight: 1.45 }}>Fuentes: {bio.rinde.fuente} (doi 10.1007/s10457-026-01430-w); Amarilla et al. 2025, Field Crops Research 109736 (girasol sin polinizadores: −30,4% de rendimiento).</span>
         </div>
       </div>
       <MonitoreoCampo />
@@ -234,11 +235,11 @@ function MonitoreoCampo() {
           <strong id="monit-t" style={{ fontSize: 15 }}>Monitoreo de campo</strong>
           <span className="muted" style={{ fontSize: 13 }}>{fecha} · Fuente: Técnico de campo</span>
         </div>
-        <strong style={{ fontSize: 15, color: 'var(--primary-ink)' }}>{veces}x más polinizadores en el borde con monte nativo que en el centro del lote</strong>
+        <strong style={{ fontSize: 15, color: 'var(--primary-ink)' }}>{veces}x más polinizadores en el borde con el parche de bosque que en el centro del lote</strong>
         {filas.map((f) => (
-          <div key={f.k} className="stack" style={{ gap: 6 }} role="group" aria-label={`${f.k}: ${f.b} en el borde con monte nativo, ${f.c} en el centro del lote`}>
+          <div key={f.k} className="stack" style={{ gap: 6 }} role="group" aria-label={`${f.k}: ${f.b} en el borde con el parche de bosque, ${f.c} en el centro del lote`}>
             <span style={{ fontSize: 14, fontWeight: 600 }} aria-hidden="true">{f.k}</span>
-            {([['Borde con monte nativo', f.b, 'var(--primary)'], ['Centro del lote', f.c, '#9AA69E']] as const).map(([l, v, col]) => (
+            {([['Borde con parche de bosque', f.b, 'var(--primary)'], ['Centro del lote', f.c, '#9AA69E']] as const).map(([l, v, col]) => (
               <div key={l} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 140px) 1fr 28px', gap: 8, alignItems: 'center', fontSize: 13 }} aria-hidden="true">
                 <span className="muted">{l}</span>
                 <span style={{ background: 'var(--line-soft)', borderRadius: 4, height: 10, display: 'block' }}><span style={{ display: 'block', height: 10, borderRadius: 4, background: col, width: `${Math.round((v / Math.max(f.b, f.c)) * 100)}%` }} /></span>
@@ -345,7 +346,7 @@ function Satelital() {
           <figcaption style={figcap}><strong>Dic 2020 (línea base EUDR)</strong><span className="muted">Sentinel-2 L2A</span></figcaption>
         </figure>
         <figure className="card" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
-          <SatImg label="Imagen satelital del lote en noviembre 2026, sin pérdida de monte lindero" bg="#55703B" field="#A9B866" stroke="#FFD166" sw={3} />
+          <SatImg label="Imagen satelital del lote en noviembre 2026, sin pérdida de parches de bosque" bg="#55703B" field="#A9B866" stroke="#FFD166" sw={3} />
           <figcaption style={figcap}><strong>Nov 2026</strong><span className="muted">0 ha de pérdida de cobertura</span></figcaption>
         </figure>
       </div>

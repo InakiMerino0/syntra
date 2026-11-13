@@ -30,7 +30,7 @@ function Sec({ n, titulo, children }: { n: number; titulo: string; children: Rea
 export default function Informe() {
   const lotes = useLotes();
   const totalHa = lotes.reduce((sum, l) => sum + l.ha, 0);
-  const cert = certificaciones.find((c) => c.id === 'rtrs') ?? certificaciones[0];
+  const cert = certificaciones.find((c) => c.id === 'fsa') ?? certificaciones[0];
   const [ev, setEv] = useState<EvidenciaInforme | null>(null);
   const [evErr, setEvErr] = useState(false);
   const [copiado, setCopiado] = useState('');
@@ -89,9 +89,9 @@ export default function Informe() {
             <span className="display" style={{ fontWeight: 700 }}>Syntra</span>
           </div>
           <h1 id="informe-titulo" className="page-title">{INFORME_NOMBRE}</h1>
-          <span className="muted" style={{ fontSize: 14 }}>Para certificación RTRS · con sello de integridad</span>
+          <span className="muted" style={{ fontSize: 14 }}>Para certificación {cert.label} · con sello de integridad</span>
           <span className="muted" style={{ fontSize: 13 }}>Emitido {emitido} · Campaña 2026/27{ev ? ` · N.º ${ev.id}` : ''}</span>
-          <p>Syntra deja constancia de que la evidencia de este informe es el registro fiel e inalterable de lo observado en el establecimiento. Syntra no otorga la certificación: entrega evidencia verificable a la certificadora, que es quien decide.</p>
+          <p>Syntra deja constancia de que la evidencia de este informe es el registro fiel e inalterable de lo observado en el establecimiento. Syntra no otorga la certificación: entrega evidencia verificable a la certificadora, que es quien decide. Listo para revisión del perito/auditor de la certificadora.</p>
         </header>
 
         <Sec n={1} titulo="Establecimiento">
