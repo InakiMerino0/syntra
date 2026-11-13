@@ -3,13 +3,14 @@
 // evidence in the report is a faithful, unaltered record (integrity), sealed in the Blockchain Federal Argentina (simulated).
 import type { Certificacion, Corredor, Lote } from '@synta/data';
 import { corredores } from '@synta/data';
+import type { SelloGuardado } from './sellado';
 
 export const INFORME_NOMBRE = 'Informe de Evidencia Ambiental';
-export const RED_SELLADO = 'Blockchain Federal Argentina (BFA) · simulado';
+export { RED_BFA as RED_SELLADO, RED_SIMULADA } from './sellado';
 export const URL_VERIFICACION = 'https://syntra-agro.vercel.app/trazabilidad';
 
 export interface ArchivoEvidencia { archivo: string; descripcion: string; bytes: number; hash: string }
-export interface Sellado { hashManifiesto: string; raizMerkle: string; transaccion: string; bloque: string; fecha: string }
+export interface Sellado { hashManifiesto: string; raizMerkle: string }
 export interface EvidenciaInforme {
   id: string;              // deterministic per certification, e.g. SYN-2026-000184-FSA
   certId: string;          // e.g. 'fsa'
@@ -21,10 +22,10 @@ export interface EvidenciaInforme {
   revision: RevisionAuditor | null; // external review loaded by the producer (sealed as revision-auditor.json), if any
 }
 
-/** Builds the evidence (real SHA-256 per file + Merkle root; anchoring simulated). Implemented in informePdf.ts. */
-export type ConstruirEvidencia = (lotes: Lote[], certId?: string, revision?: RevisionAuditor | null) => Promise<EvidenciaInforme>;
-/** Generates and downloads the multi-page PDF. Implemented in informePdf.ts. */
-export type DescargarInforme = (lotes: Lote[], certId?: string, revision?: RevisionAuditor | null) => Promise<void>;
+/** Builds the evidence (real SHA-256 per file + Merkle root). `emitidoFijo` reuses a sealed emission date so the root reproduces. Implemented in informePdf.ts. */
+export type ConstruirEvidencia = (lotes: Lote[], certId?: string, revision?: RevisionAuditor | null, emitidoFijo?: string) => Promise<EvidenciaInforme>;
+/** Generates and downloads the multi-page PDF (prints the seal state if `sello` is given). Implemented in informePdf.ts. */
+export type DescargarInforme = (lotes: Lote[], certId?: string, revision?: RevisionAuditor | null, sello?: SelloGuardado | null) => Promise<void>;
 
 // ---------- One report per certification ----------
 

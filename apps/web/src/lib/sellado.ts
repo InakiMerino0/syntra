@@ -1,28 +1,59 @@
 // Sealing adapter: the single place where "anchor this hash on a chain" is decided.
-// Today the app uses SelladorSimulado (deterministic, no network). SelladorBFA is a stub for the real
-// time-stamping service of the Blockchain Federal Argentina (https://bfa.ar): it is NOT tested against any real
-// endpoint because the team still has to onboard with the BFA and confirm endpoint and terms of use.
+// Default: REAL sealing in the Blockchain Federal Argentina, "Sello de Tiempo 1.0" (TSA1), called straight from the
+// browser (tsaapi.bfa.ar answers CORS with `Access-Control-Allow-Origin: *`, no keys). SelladorSimulado is only the
+// fallback (offline / BFA error / VITE_SELLADO=simulado) and is always labelled "simulado".
+//
+// TSA1 flow (verified against the real service):
+//   POST /api/tsa/stamp/  {file_hash}        -> {temporary_rd, status:"success"}   ("success" = RECEIVED, not sealed yet)
+//   POST /api/tsa/verify/ {file_hash, rd}    -> {status:"pending"} ... minutes later
+//                                               {status:"success", messages:"... bloque N el ...", attestation_time, permanent_rd}
+// Public verification of TSA1 is NOT by hash: at https://bfa.ar/sello#tab_3 the user uploads the ORIGINAL FILE + the
+// receipt (.rd). That is why Syntra seals the SHA-256 of an "acta" file the user can download.
 
-export interface SelloInfo {
-  /** Hash that was sealed (hex, no 0x prefix). */
-  hash: string;
-  /** Transaction id (0x-prefixed). */
-  tx: string;
-  /** Block number, formatted es-AR style (e.g. "52.345.678"). */
-  bloque: string;
-  /** ISO-8601 timestamp of the seal. */
-  fecha: string;
-  /** Human readable network label. */
-  red: string;
-  /** true when nothing was actually written on a chain. */
-  simulado: boolean;
-}
+export type EstadoSello = 'pendiente' | 'confirmado';
+
+export interface ResultadoEnvio { estado: 'pendiente'; rd: string; enviadoEn: string }
+export type ResultadoConsulta =
+  | { estado: 'pendiente' }
+  | { estado: 'confirmado'; bloque: string; fecha: string; permanentRd: string }
+  | { estado: 'error'; mensaje: string };
 
 export interface Sellador {
-  sellar(hashHex: string): Promise<SelloInfo>;
-  verificar(hashHex: string, sello: SelloInfo): Promise<boolean>;
+  /** Short label of the network/service, e.g. for the UI. */
+  readonly red: string;
+  /** true when nothing is written on any chain. */
+  readonly simulado: boolean;
+  sellar(hashHex: string): Promise<ResultadoEnvio>;
+  consultar(hashHex: string, rd: string): Promise<ResultadoConsulta>;
 }
 
+/** What we keep in localStorage per sealed hash. */
+export interface SelloGuardado {
+  hash: string;
+  rd: string;
+  estado: EstadoSello;
+  bloque?: string;
+  /** As returned by BFA ("dd/mm/yyyy HH:MM:SS", Argentina time assumed). */
+  fecha?: string;
+  permanentRd?: string;
+  enviadoEn: string;
+  actaNombre: string;
+  /** true if sealed with the fallback simulation. */
+  simulado: boolean;
+  /** `emitido` of the evidence the acta was built from, so the root can be reproduced. */
+  emitido?: string;
+  certId?: string;
+  /** The acta text itself, so it can be downloaded again byte for byte. */
+  acta?: string;
+}
+
+export const RED_BFA = 'Blockchain Federal Argentina (BFA) — Sello de Tiempo 1.0';
+export const RED_SIMULADA = 'Blockchain Federal Argentina (BFA) · simulado';
+export const URL_BFA_VERIFICAR = 'https://bfa.ar/sello#tab_3';
+export const INSTRUCCION_BFA = 'Para verificar: entrá a bfa.ar/sello, subí el acta (.json) y el recibo (.rd).';
+export const TIMEOUT_MS = 20_000;
+
+const BASE_BFA = 'https://tsaapi.bfa.ar';
 const enc = new TextEncoder();
 
 async function sha256Hex(input: string): Promise<string> {
@@ -30,69 +61,131 @@ async function sha256Hex(input: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const formatearMiles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const formatearMiles = (n: number | string) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+export const formatearBloque = (b: string) => (/^\d+$/.test(b) ? formatearMiles(b) : b);
 const limpiar = (h: string) => h.trim().toLowerCase().replace(/^0x/, '');
+const dos = (n: number) => String(n).padStart(2, '0');
 
-export const RED_SIMULADA = 'Blockchain Federal Argentina (BFA) · simulado';
+/** "dd/mm/yyyy HH:MM:SS" in Argentina time (UTC-3, no DST). */
+function fechaArgentina(d: Date): string {
+  const a = new Date(d.getTime() - 3 * 3600_000);
+  return `${dos(a.getUTCDate())}/${dos(a.getUTCMonth() + 1)}/${a.getUTCFullYear()} ${dos(a.getUTCHours())}:${dos(a.getUTCMinutes())}:${dos(a.getUTCSeconds())}`;
+}
 
-/** Same derivation as informePdf.ts: block and tx come deterministically from the (Merkle root) hash. */
-export class SelladorSimulado implements Sellador {
-  private async derivar(hash: string): Promise<Pick<SelloInfo, 'tx' | 'bloque'>> {
-    return {
-      bloque: formatearMiles(50_000_000 + (parseInt(hash.slice(0, 7), 16) % 9_000_000)),
-      tx: '0x' + (await sha256Hex('tx:' + hash)),
-    };
-  }
+/** Block number from a TSA1 verify response: "bloque N" in `messages`, else the last '-' segment of the decoded permanent_rd. */
+export function bloqueDeRespuesta(j: { messages?: unknown; permanent_rd?: unknown }): string | null {
+  const m = /bloque (\d+)/.exec(String(j.messages ?? ''));
+  if (m) return m[1];
+  try {
+    const ultimo = globalThis.atob(String(j.permanent_rd ?? '')).split('-').pop() ?? '';
+    return /^\d+$/.test(ultimo) ? ultimo : null;
+  } catch { return null; }
+}
 
-  async sellar(hashHex: string): Promise<SelloInfo> {
-    const hash = limpiar(hashHex);
-    const { tx, bloque } = await this.derivar(hash);
-    const segundos = 20 + (parseInt(hash.slice(7, 12), 16) % 100);
-    return { hash, tx, bloque, fecha: new Date(Date.now() + segundos * 1000).toISOString(), red: RED_SIMULADA, simulado: true };
-  }
-
-  async verificar(hashHex: string, sello: SelloInfo): Promise<boolean> {
-    const hash = limpiar(hashHex);
-    if (limpiar(sello.hash) !== hash) return false;
-    const { tx, bloque } = await this.derivar(hash);
-    return sello.tx === tx && sello.bloque === bloque;
+async function postJson(url: string, body: unknown): Promise<unknown> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal });
+    if (!r.ok) throw new Error(`BFA respondió HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') throw new Error('La BFA no respondió a tiempo.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-/**
- * UNTESTED stub. Expects VITE_BFA_TSA_URL to point to a base URL exposing (assumed contract, to be replaced by
- * the real one once the BFA confirms it):
- *   POST {url}/sellar    body {hash}                -> {tx, bloque, fecha}
- *   POST {url}/verificar body {hash, tx, bloque}    -> {valido: boolean}
- * Ideally this URL is OUR backend sealing worker (daily Merkle root), never a client holding BFA credentials.
- */
+/** Real sealing in the BFA (TSA1). `sellar` throws on network/service errors: the caller falls back to the simulation. */
 export class SelladorBFA implements Sellador {
-  constructor(private readonly url: string | undefined = import.meta.env.VITE_BFA_TSA_URL as string | undefined) {}
+  readonly red = RED_BFA;
+  readonly simulado = false;
 
-  private base(): string {
-    if (!this.url) throw new Error('No configurado: definí VITE_BFA_TSA_URL (servicio de sellado de la BFA) para usar el sellado real.');
-    return this.url.replace(/\/$/, '');
+  async sellar(hashHex: string): Promise<ResultadoEnvio> {
+    const j = (await postJson(`${BASE_BFA}/api/tsa/stamp/`, { file_hash: limpiar(hashHex) })) as { temporary_rd?: string; status?: string };
+    if (j.status !== 'success' || !j.temporary_rd) throw new Error('La BFA no confirmó la recepción del hash.');
+    // "success" here only means RECEIVED: the seal enters a block some minutes later.
+    return { estado: 'pendiente', rd: j.temporary_rd, enviadoEn: new Date().toISOString() };
   }
 
-  async sellar(hashHex: string): Promise<SelloInfo> {
-    const base = this.base();
-    const hash = limpiar(hashHex);
-    const r = await fetch(`${base}/sellar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hash }) });
-    if (!r.ok) throw new Error(`Sellado BFA falló: HTTP ${r.status}`);
-    const j = (await r.json()) as { tx: string; bloque: string | number; fecha?: string };
-    return { hash, tx: j.tx, bloque: String(j.bloque), fecha: j.fecha ?? new Date().toISOString(), red: 'Blockchain Federal Argentina (BFA)', simulado: false };
-  }
-
-  async verificar(hashHex: string, sello: SelloInfo): Promise<boolean> {
-    const base = this.base();
-    const r = await fetch(`${base}/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hash: limpiar(hashHex), tx: sello.tx, bloque: sello.bloque }) });
-    if (!r.ok) throw new Error(`Verificación BFA falló: HTTP ${r.status}`);
-    return Boolean(((await r.json()) as { valido?: boolean }).valido);
+  async consultar(hashHex: string, rd: string): Promise<ResultadoConsulta> {
+    try {
+      const j = (await postJson(`${BASE_BFA}/api/tsa/verify/`, { file_hash: limpiar(hashHex), rd })) as {
+        status?: string; messages?: unknown; attestation_time?: unknown; permanent_rd?: unknown;
+      };
+      if (j.status === 'pending') return { estado: 'pendiente' };
+      if (j.status !== 'success') return { estado: 'error', mensaje: typeof j.messages === 'string' && j.messages ? j.messages : 'La BFA devolvió un estado desconocido.' };
+      const bloque = bloqueDeRespuesta(j);
+      if (!bloque) return { estado: 'error', mensaje: 'La BFA confirmó el sello pero no pudimos leer el número de bloque.' };
+      // ⚠ sin confirmar: attestation_time se asume en hora argentina.
+      const fecha = typeof j.attestation_time === 'string' && j.attestation_time ? j.attestation_time : fechaArgentina(new Date());
+      return { estado: 'confirmado', bloque, fecha, permanentRd: typeof j.permanent_rd === 'string' ? j.permanent_rd : '' };
+    } catch (e) {
+      return { estado: 'error', mensaje: e instanceof Error ? e.message : 'No pudimos consultar a la BFA.' };
+    }
   }
 }
 
-/** Real sealer only when VITE_BFA_TSA_URL is set; otherwise the deterministic simulation. */
+/** Fallback: deterministic, no network. Everything it returns is labelled "simulado" by the UI. */
+export class SelladorSimulado implements Sellador {
+  readonly red = RED_SIMULADA;
+  readonly simulado = true;
+
+  async sellar(hashHex: string): Promise<ResultadoEnvio> {
+    return { estado: 'pendiente', rd: 'SIMULADO-' + limpiar(hashHex), enviadoEn: new Date().toISOString() };
+  }
+
+  async consultar(hashHex: string): Promise<ResultadoConsulta> {
+    const hash = limpiar(hashHex);
+    const bloque = String(50_000_000 + (parseInt(hash.slice(0, 7), 16) % 9_000_000));
+    const permanentRd = 'SIMULADO-' + (await sha256Hex('tx:' + hash));
+    return { estado: 'confirmado', bloque, fecha: fechaArgentina(new Date()), permanentRd };
+  }
+}
+
+/** Real BFA by default; `VITE_SELLADO=simulado` forces the simulation. */
 export function obtenerSellador(): Sellador {
-  const url = import.meta.env.VITE_BFA_TSA_URL as string | undefined;
-  return url ? new SelladorBFA(url) : new SelladorSimulado();
+  const modo = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_SELLADO;
+  return modo === 'simulado' ? new SelladorSimulado() : new SelladorBFA();
+}
+
+/** Real sealer; if the very first call fails (offline, BFA down) seals in simulation and says so. */
+export async function sellarConFallback(hashHex: string): Promise<{ sellador: Sellador; envio: ResultadoEnvio; fallo?: string }> {
+  const principal = obtenerSellador();
+  try {
+    return { sellador: principal, envio: await principal.sellar(hashHex) };
+  } catch (e) {
+    if (principal.simulado) throw e;
+    const sim = new SelladorSimulado();
+    return { sellador: sim, envio: await sim.sellar(hashHex), fallo: e instanceof Error ? e.message : 'No pudimos contactar a la BFA.' };
+  }
+}
+
+// ---------- Persistence (localStorage, always try/catch) ----------
+
+const claveHash = (h: string) => `syntra.sello.${limpiar(h)}`;
+const claveCert = (certId: string) => `syntra.sello.cert.${certId}`;
+
+export function guardarSelloLocal(s: SelloGuardado): boolean {
+  try {
+    localStorage.setItem(claveHash(s.hash), JSON.stringify(s));
+    if (s.certId) localStorage.setItem(claveCert(s.certId), limpiar(s.hash));
+    return true;
+  } catch { return false; }
+}
+
+export function cargarSelloLocal(hash: string): SelloGuardado | null {
+  try {
+    const raw = localStorage.getItem(claveHash(hash));
+    return raw ? (JSON.parse(raw) as SelloGuardado) : null;
+  } catch { return null; }
+}
+
+/** Latest seal made for this certification's report, if any. */
+export function selloDeCert(certId: string): SelloGuardado | null {
+  try {
+    const h = localStorage.getItem(claveCert(certId));
+    return h ? cargarSelloLocal(h) : null;
+  } catch { return null; }
 }

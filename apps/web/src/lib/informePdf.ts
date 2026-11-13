@@ -1,4 +1,4 @@
-// Evidence builder (real SHA-256 + Merkle root, simulated anchoring) and PDF generator (jsPDF + qrcode).
+// Evidence builder (real SHA-256 + Merkle root; the acta hash is sealed in the BFA, see sellado.ts) and PDF generator (jsPDF + qrcode).
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import {
@@ -7,9 +7,11 @@ import {
 } from '@synta/data';
 import type { Corredor, Lote, LatLng, ReqStatus } from '@synta/data';
 import {
-  INFORME_NOMBRE, RED_SELLADO, URL_VERIFICACION, DICTAMEN_LABEL, ESTADO_REVISION, TITULO_DICTAMEN,
+  INFORME_NOMBRE, RED_SELLADO, RED_SIMULADA, URL_VERIFICACION, DICTAMEN_LABEL, ESTADO_REVISION, TITULO_DICTAMEN,
   informeId, corredoresDeCert, limpiarOtrasCerts, revisionCompleta,
 } from './informe';
+import { URL_BFA_VERIFICAR, formatearBloque } from './sellado';
+import type { SelloGuardado } from './sellado';
 import type { ArchivoEvidencia, RevisionAuditor, ConstruirEvidencia, DescargarInforme, EvidenciaInforme } from './informe';
 
 // ---------- Hashing helpers (hex without the 0x prefix everywhere) ----------
@@ -34,6 +36,7 @@ async function raizDeMerkle(hashes: string[]): Promise<string> {
   return nivel[0];
 }
 
+export { sha256Hex };
 const formatearMiles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const dos = (n: number) => String(n).padStart(2, '0');
 
@@ -45,12 +48,12 @@ function fechaCorta(iso: string): string {
 
 // ---------- Evidence ----------
 
-export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fsa', revisionIn = null) => {
+export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fsa', revisionIn = null, emitidoFijo) => {
   const cert = certificaciones.find((c) => c.id === certId) ?? certificaciones.find((c) => c.id === 'fsa') ?? certificaciones[0];
   const idInforme = informeId(cert.id);
   const corrCert = corredoresDeCert(cert);
   const revision = revisionCompleta(revisionIn) ? revisionIn : null;
-  const emitido = new Date().toISOString();
+  const emitido = emitidoFijo ?? new Date().toISOString();
   const totalHa = lotes.reduce((s, l) => s + l.ha, 0);
 
   // Real GeoJSON (GeoJSON order is [lng, lat]; the data uses [lat, lng]); rings are closed.
@@ -114,17 +117,31 @@ export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fs
 
   const raizMerkle = await raizDeMerkle(archivos.map((a) => a.hash));
 
-  // Simulated anchoring, derived deterministically from the root.
-  const bloque = formatearMiles(50_000_000 + (parseInt(raizMerkle.slice(0, 7), 16) % 9_000_000));
-  const transaccion = '0x' + (await sha256Hex('tx:' + raizMerkle));
-  const segundos = 20 + (parseInt(raizMerkle.slice(7, 12), 16) % 100);
-  const fecha = fechaCorta(new Date(new Date(emitido).getTime() + segundos * 1000).toISOString()) + ' (hora Argentina)';
-
   return {
     id: idInforme, certId: cert.id, emitido, certObjetivo: cert.label, lotes, archivos, revision,
-    sellado: { hashManifiesto, raizMerkle, transaccion, bloque, fecha },
+    sellado: { hashManifiesto, raizMerkle },
   } satisfies EvidenciaInforme;
 };
+
+// ---------- Acta (the file whose SHA-256 is sealed in the BFA) ----------
+
+/** Deterministic JSON (fixed key order, no dates other than `emitido`). Its UTF-8 bytes are what gets hashed and sealed. */
+export function construirActa(ev: EvidenciaInforme): string {
+  return JSON.stringify({
+    tipo: 'acta-informe-syntra',
+    version: 1,
+    informe: ev.id,
+    certificacion: ev.certObjetivo,
+    emitido: ev.emitido,
+    raizMerkle: ev.sellado.raizMerkle,
+    hashManifiesto: ev.sellado.hashManifiesto,
+    archivos: ev.archivos.map((a) => ({ archivo: a.archivo, hash: a.hash, bytes: a.bytes })),
+    establecimiento: { nombre: establecimiento.name, renspa: establecimiento.renspa },
+  }, null, 2);
+}
+
+export const hashActa = (acta: string) => sha256Hex(acta);
+export const nombreActa = (ev: EvidenciaInforme) => `acta-${ev.id}.json`;
 
 // ---------- PDF ----------
 
@@ -291,13 +308,14 @@ function dibujarMapa(p: Pdf, lotes: Lote[], corredores: Corredor[], x0: number, 
   d.setDrawColor(...C.muted); d.setLineWidth(0.3); d.line(x0 + bw - 3.6, y0 + 9, x0 + bw - 3.6, y0 + 6.5);
 }
 
-async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
+async function generarPdf(ev: EvidenciaInforme, actaHash: string, sello: SelloGuardado | null): Promise<jsPDF> {
   const p = new Pdf(ev);
   const d = p.doc;
   const cert = certificaciones.find((c) => c.id === ev.certId) ?? certificaciones[0];
   const corrCert = corredoresDeCert(cert);
   const totalHa = ev.lotes.reduce((s, l) => s + l.ha, 0);
   const s = ev.sellado;
+  const vigente = sello && sello.hash === actaHash ? sello : null; // seal of THIS acta
 
   // Title block
   p.font('bold', 20, false, C.ink); d.text(t(INFORME_NOMBRE), M, p.y + 6); p.y += 11;
@@ -344,22 +362,33 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   void yAntes;
   p.y = Math.max(p.y, yQr + 34);
 
-  // 4 Sellado de tiempo
+  // 4 Sellado de tiempo (prints the real state)
   p.section(4, 'Sellado de tiempo');
-  p.fields([
-    ['Red', RED_SELLADO], ['Hash del manifiesto', s.hashManifiesto, true], ['Raíz del árbol de Merkle', s.raizMerkle, true],
-    ['Transacción', s.transaccion, true], ['Número de bloque', s.bloque], ['Fecha/hora de sellado', s.fecha],
-  ]);
-  p.paragraph('La huella del manifiesto forma parte del árbol de Merkle; el valor registrado en la BFA es la raíz, que certifica todas las evidencias con un único sello de tiempo.', COL_X, COL_W, { size: 8.5, color: C.muted });
+  const base: [string, string, boolean?][] = [['Hash del acta (SHA-256)', actaHash, true], ['Raíz del árbol de Merkle', s.raizMerkle, true]];
+  if (vigente && vigente.estado === 'confirmado') {
+    p.fields([
+      ['Red', vigente.simulado ? RED_SIMULADA : RED_SELLADO], ...base,
+      ['Número de bloque', formatearBloque(vigente.bloque ?? '-')], ['Fecha/hora de sellado', (vigente.fecha ?? '-') + ' (hora Argentina)'],
+    ]);
+    p.paragraph(vigente.simulado
+      ? 'Sello SIMULADO (no se pudo contactar a la BFA): no tiene validez de sellado de tiempo. Volvé a sellar desde la plataforma.'
+      : 'Cómo verificarlo: entrá a ' + URL_BFA_VERIFICAR.replace('https://', '') + ' y subí el acta (' + (vigente.actaNombre || nombreActa(ev)) + ') junto con el recibo (.rd) que descargás desde la plataforma. La BFA confirma bloque y fecha.', COL_X, COL_W, { size: 8.5, color: vigente.simulado ? C.bad : C.muted });
+  } else if (vigente) {
+    p.fields([['Red', vigente.simulado ? RED_SIMULADA : RED_SELLADO], ...base, ['Estado', 'Enviado, pendiente de bloque']]);
+    p.paragraph('El hash del acta fue recibido por la BFA y todavía no entró en un bloque (suele tardar unos minutos). Consultá el estado desde la plataforma y volvé a generar este PDF cuando figure el bloque.', COL_X, COL_W, { size: 8.5, color: C.warn });
+  } else {
+    p.fields([...base, ['Estado', 'Sin sellar (generá el sello desde la plataforma)']]);
+    p.paragraph(sello ? 'Hubo cambios desde el último sello: volvé a sellar desde la plataforma.' : 'Syntra sella en la Blockchain Federal Argentina el hash del acta, que incluye la raíz de Merkle de todas las evidencias.', COL_X, COL_W, { size: 8.5, color: sello ? C.warn : C.muted });
+  }
 
   // 5 Cómo verificarlo
   p.section(5, 'Cómo verificarlo');
   [
     'Obtené el SHA-256 de cada archivo de evidencia.',
     'Compará cada huella con el inventario (sección 9) y con el manifiesto.',
-    'Recalculá la raíz de Merkle a partir de las huellas del inventario.',
-    'Contrastá la raíz con el sello registrado en la BFA (transacción y bloque).',
-    'Si un solo dato cambió, la raíz no coincide.',
+    'Recalculá la raíz de Merkle a partir de las huellas del inventario; debe coincidir con la del acta.',
+    'Verificá el sello: en bfa.ar/sello subí el acta (.json) y el recibo (.rd).',
+    'Si un solo dato cambió, la raíz y el hash del acta no coinciden.',
   ].forEach((txt, i) => {
     const lines = p.wrap(txt, COL_W - 7);
     p.ensure(lines.length * LH + 1);
@@ -427,8 +456,8 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   return d;
 }
 
-export const descargarInforme: DescargarInforme = async (lotes, certId, revision) => {
-  const ev = await construirEvidencia(lotes, certId, revision);
-  const doc = await generarPdf(ev);
+export const descargarInforme: DescargarInforme = async (lotes, certId, revision, sello = null) => {
+  const ev = await construirEvidencia(lotes, certId, revision, sello?.emitido);
+  const doc = await generarPdf(ev, await hashActa(construirActa(ev)), sello);
   doc.save(`syntra-informe-${ev.certId}-${ev.id}.pdf`);
 };

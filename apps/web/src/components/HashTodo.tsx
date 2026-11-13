@@ -2,7 +2,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { sha256, shortHash } from '@synta/ui';
 import * as data from '@synta/data';
 import { useLotes } from '../store/lotes';
-import { RED_SELLADO } from '../lib/informe';
+import {
+  SelladorBFA, SelladorSimulado, sellarConFallback, guardarSelloLocal, formatearBloque, URL_BFA_VERIFICAR, type SelloGuardado,
+} from '../lib/sellado';
 import './hashtodo.css';
 
 // The evidence a certifier cares about, grouped in the producer's words. Each group bundles one or more
@@ -29,7 +31,7 @@ const items = GRUPOS
   .filter((g) => g.present > 0);
 
 interface Row { label: string; desc: string; hash: string; bytes: number; count: number }
-interface Anchor { tx: string; bloque: string; generado: string }
+const MAX_ESPERA_MS = 30 * 60_000;
 
 const enc = new TextEncoder();
 const fmt = (n: number) => n.toLocaleString('es-AR');
@@ -55,7 +57,10 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
   const runRef = useRef(0);
   const [rows, setRows] = useState<Row[]>([]);
   const [root, setRoot] = useState<string | null>(null);
-  const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const [sello, setSello] = useState<SelloGuardado | null>(null);
+  const selloRef = useRef<SelloGuardado | null>(null);
+  selloRef.current = sello;
+  const enVuelo = useRef(false);
   const [msg, setMsg] = useState('');
   const [started, setStarted] = useState(false);
   const lotesActuales = useLotes(); // includes lots drawn on the map
@@ -64,7 +69,7 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
     const id = ++runRef.current;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const step = reduce ? 0 : 150;
-    setStarted(true); setRows([]); setRoot(null); setAnchor(null); setMsg('');
+    setStarted(true); setRows([]); setRoot(null); setSello(null); setMsg('');
     const out: Row[] = [];
     for (const d of items) {
       const json = JSON.stringify('lotes' in d.data ? { ...d.data, lotes: lotesActuales } : d.data);
@@ -79,17 +84,58 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
     setRoot(r);
     if (!reduce) await wait(900);
     if (runRef.current !== id) return;
-    // Anchoring is simulated: fake tx and block derived from the real root (same approach as Procesando).
-    setAnchor({
-      tx: '0x' + r.slice(2).split('').reverse().join(''),
-      bloque: '#58.' + (216000 + (parseInt(r.slice(2, 6), 16) % 1000)).toLocaleString('es-AR'),
-      generado: new Date().toISOString(),
-    });
+    // Real sealing in the BFA (TSA1): what gets sealed is the SHA-256 of this acta file (the user downloads it + the receipt).
+    const acta = JSON.stringify({
+      tipo: 'acta-evidencia-campo-syntra', version: 1, generado: new Date().toISOString(), raiz: r,
+      datasets: out.map((x) => ({ label: x.label, hash: x.hash, bytes: x.bytes })),
+    }, null, 2);
+    const hash = (await sha256(acta)).slice(2);
+    try {
+      const { sellador, envio, fallo } = await sellarConFallback(hash);
+      if (runRef.current !== id) return;
+      const nuevo: SelloGuardado = {
+        hash, rd: envio.rd, estado: 'pendiente', enviadoEn: envio.enviadoEn, actaNombre: `syntra-evidencia-${r.slice(2, 10)}.json`,
+        simulado: sellador.simulado, acta,
+      };
+      guardarSelloLocal(nuevo);
+      setSello(nuevo);
+      if (fallo) setMsg(`No pudimos contactar a la BFA (${fallo}). Sello simulado, sin validez.`);
+    } catch {
+      if (runRef.current === id) setMsg('No pudimos sellar. Probá de nuevo en unos segundos.');
+    }
   }
+
+  async function consultar() {
+    const s = selloRef.current;
+    if (!s || s.estado !== 'pendiente' || enVuelo.current) return;
+    enVuelo.current = true;
+    try {
+      const res = await (s.simulado ? new SelladorSimulado() : new SelladorBFA()).consultar(s.hash, s.rd);
+      if (selloRef.current?.hash !== s.hash) return;
+      if (res.estado === 'confirmado') {
+        const nuevo: SelloGuardado = { ...s, estado: 'confirmado', bloque: res.bloque, fecha: res.fecha, permanentRd: res.permanentRd };
+        guardarSelloLocal(nuevo); setSello(nuevo); setMsg('');
+      } else setMsg(res.estado === 'error' ? `No pudimos consultar a la BFA (${res.mensaje}).` : 'Sigue pendiente de bloque.');
+    } finally { enVuelo.current = false; }
+  }
+
+  // Auto-consult every 60 s (max ~30 min) while a seal is pending.
+  const selloHash = sello?.hash, selloEstado = sello?.estado;
+  useEffect(() => {
+    if (!selloHash || selloEstado !== 'pendiente') return;
+    void consultar();
+    const idt = setInterval(() => {
+      const s = selloRef.current;
+      if (!s || Date.now() - Date.parse(s.enviadoEn) > MAX_ESPERA_MS) { clearInterval(idt); return; }
+      void consultar();
+    }, 60_000);
+    return () => clearInterval(idt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selloHash, selloEstado]);
 
   function open() {
     runRef.current++;
-    setStarted(false); setRows([]); setRoot(null); setAnchor(null); setMsg('');
+    setStarted(false); setRows([]); setRoot(null); setSello(null); setMsg('');
     dialogRef.current?.showModal();
   }
 
@@ -116,25 +162,27 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
     }
   }
 
-  function descargar() {
-    if (!root || !anchor) return;
-    const evidencia = {
-      generado: anchor.generado,
-      root,
-      tx: anchor.tx,
-      bloque: anchor.bloque,
-      red: RED_SELLADO,
-      datasets: rows.map((r) => ({ label: r.label, hash: r.hash, bytes: r.bytes })),
-    };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(evidencia, null, 2)], { type: 'application/json' }));
+  function bajar(nombre: string, contenido: string, tipo: string) {
+    const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `syntra-evidencia-${root.slice(2, 10)}.json`;
+    a.download = nombre;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setMsg('Evidencia descargada');
+  }
+
+  function descargar() {
+    if (!sello?.acta) return;
+    bajar(sello.actaNombre, sello.acta, 'application/json');
+    setMsg('Acta descargada');
+  }
+
+  function descargarRecibo() {
+    if (!sello) return;
+    bajar(sello.actaNombre.replace(/\.json$/, '') + '.rd', (sello.estado === 'confirmado' && sello.permanentRd) || sello.rd, 'text/plain');
+    setMsg('Recibo descargado');
   }
 
   const done = rows.length === items.length;
@@ -203,19 +251,23 @@ export default function HashTodo({ variant = 'secondary' }: { variant?: Variant 
             <strong className="mono hashtodo-root">{root ?? 'calculando…'}</strong>
             <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>
               {!root ? `${rows.length} de ${items.length} conjuntos sellados`
-                : !anchor ? 'Anclando en la Blockchain Federal Argentina (simulado)…'
-                : <>Anclado en BFA (Blockchain Federal Argentina, simulado) · tx <span className="mono" style={{ color: 'var(--dark-ink)' }}>{shortHash(anchor.tx)}</span> · bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{anchor.bloque}</span> · {new Date(anchor.generado).toLocaleString('es-AR')}</>}
+                : !sello ? 'Enviando a la Blockchain Federal Argentina…'
+                : sello.estado === 'pendiente' ? `${sello.simulado ? 'Simulado · ' : ''}Enviado a la BFA · pendiente de bloque (suele tardar unos minutos)`
+                : <>{sello.simulado ? 'Sello simulado (sin validez)' : 'Sellado en BFA'} · bloque <span className="mono" style={{ color: 'var(--dark-ink)' }}>{formatearBloque(sello.bloque ?? '-')}</span> · {sello.fecha} (hora Argentina)</>}
             </span>
           </section>
 
           <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.45 }}>
             En la cadena solo queda la huella; los datos quedan en Syntra. Si alguien cambia un solo dato, la huella raíz deja de coincidir.
+            {sello && !sello.simulado && <> Para verificar: entrá a <a href={URL_BFA_VERIFICAR} target="_blank" rel="noreferrer noopener">bfa.ar/sello</a> y subí el acta y el recibo.</>}
           </p>
 
           <div className="hashtodo-actions">
             <span role="status" className="muted hashtodo-msg">{msg}</span>
             <button type="button" className="btn btn-secondary" onClick={copiar} disabled={!root}>Copiar huella raíz</button>
-            <button type="button" className="btn btn-primary" onClick={descargar} disabled={!anchor}>Descargar evidencia (.json)</button>
+            {sello?.estado === 'pendiente' && <button type="button" className="btn btn-secondary" onClick={() => void consultar()}>Consultar</button>}
+            <button type="button" className="btn btn-secondary" onClick={descargarRecibo} disabled={!sello}>Descargar recibo (.rd)</button>
+            <button type="button" className="btn btn-primary" onClick={descargar} disabled={!sello}>Descargar acta (.json)</button>
           </div>
           </>
           )}

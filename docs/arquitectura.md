@@ -134,11 +134,11 @@ Sobre la BFA: el sellado se haría contra el **servicio de sellado de tiempo de 
 |---|---|---|
 | Mapa, dibujo de lotes y polígonos | **Real** (Leaflet; polígonos en el navegador) | Persistidos en PostGIS |
 | SHA-256 y árbol de Merkle | **Real** (Web Crypto, en el navegador) | Igual, más prueba por hoja en el worker |
-| Anclaje en la BFA (tx, bloque) | **Simulado** (derivado de la raíz) | Worker + TSA de la BFA (falta alta) |
+| Anclaje en la BFA (bloque) | **Real**: Sello de Tiempo 1.0 (`tsaapi.bfa.ar`) desde el navegador, sobre el hash del acta del informe; verificable en bfa.ar/sello con acta + recibo .rd. Los eventos de ejemplo de Trazabilidad siguen simulados | Worker que sella la raíz de Merkle diaria + almacenamiento WORM |
 | Modelo de conectividad | **Real pero simplificado**: método tipo Circuitscape en el navegador sobre datos mock | `services/circuitscape` (Julia, sin probar) |
 | Satélite / NDVI | Mock (hay trabajo en curso para Sentinel-2) | Ingesta real |
 | Mapa de rendimiento, inundables | Mock | Importador de monitores / capa hidrológica |
-| Informe PDF por certificación | **Real** (generado en el navegador, sellado simulado) | Igual, con sello real y verificación pública |
+| Informe PDF por certificación | **Real** (generado en el navegador, con sello real en BFA) | Igual, con sello real y verificación pública |
 | Requisitos FSA / GlobalG.A.P. | Representativos, **sin validar** biológicamente | Mapeo oficial validado con el equipo científico |
 | Usuarios, persistencia, permisos | No existen (datos en memoria/local) | Backend + Auth + RLS |
 | Offline | No (hay trabajo en curso) | PWA con cola |

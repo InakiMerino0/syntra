@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { indicadoresImpacto, serviciosEcosistemicos, fraseImpacto } from '../lib/impacto';
 import { Badge, ProgressBar } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
+import Exportar from '../components/Exportar';
 import { useLotes } from '../store/lotes';
 import { ecorregion, establecimiento, kpis, ejes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds, reqLabel } from '@synta/data';
 
@@ -36,6 +37,7 @@ export default function Panel() {
         </div>
         <div className="row" style={{ gap: 10, alignItems: 'center' }}>
           <Badge tone="warn">Datos de demostración</Badge>
+          <Exportar />
           <HashTodo variant="secondary" />
           <Link to="/mapa?dibujar=1" className="btn btn-primary">+ Nuevo lote</Link>
         </div>
