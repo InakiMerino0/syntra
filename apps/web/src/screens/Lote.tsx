@@ -288,7 +288,7 @@ function Seguimiento({ kind }: { kind: Kind }) {
           <div style={tile}><span className="display" style={{ fontSize: 30, lineHeight: 1.1 }}>{ult.renuevos.toLocaleString('es-AR')}</span><span style={{ fontSize: 13 }}>renuevos por ha (autosiembra, último año)</span></div>
           <div style={tile}><span className="display" style={{ fontSize: 30, lineHeight: 1.1 }}>{anios} años</span><span style={{ fontSize: 13 }}>desde la implantación ({ref.implantado})</span></div>
         </div>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>En {anios} años nunca hizo falta replantar: el corredor se renueva solo. Eso es biodiversidad perdurable.</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>Desde el 2.º–3.er año el corredor se sostiene solo: en {anios} años nunca hizo falta replantar. Eso es biodiversidad perdurable.</p>
         <figure style={{ margin: 0 }} className="stack">
           <figcaption style={{ fontSize: 13, fontWeight: 600 }}>NDVI del corredor de referencia, {y0}–{y1}</figcaption>
           <svg viewBox="0 0 800 220" role="img" aria-label={`NDVI del corredor de referencia entre ${y0} y ${y1}: sube de ${s[0].ndvi.toLocaleString('es-AR')} a ${ult.ndvi.toLocaleString('es-AR')} y se estabiliza`} style={{ width: '100%', height: 'auto' }}>
