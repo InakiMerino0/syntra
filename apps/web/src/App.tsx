@@ -10,12 +10,14 @@ import Informe from './screens/Informe';
 import Accion from './screens/Accion';
 import Plan from './screens/Plan';
 import Demo from './screens/Demo';
+import Verificar from './screens/Verificar';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/demo" element={<Demo />} />
+      <Route path="/verificar" element={<Verificar />} />
       <Route element={<AppLayout />}>
         <Route path="/panel" element={<Panel />} />
         <Route path="/mapa" element={<Mapa />} />

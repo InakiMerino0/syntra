@@ -72,7 +72,7 @@ export default function Accion() {
       </header>
 
       <div className="row" style={{ gap: 20, alignItems: 'flex-start' }}>
-        <form onSubmit={onSubmit} className="card" style={{ flex: '3 1 420px', minWidth: 0, padding: 'clamp(16px, 5vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <form onSubmit={onSubmit} className="card" style={{ flex: '1 1 420px', maxWidth: 720, minWidth: 0, padding: 'clamp(16px, 5vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <fieldset style={{ margin: 0, padding: 0, border: 0 }}>
             <legend style={{ fontSize: 13, fontWeight: 600, padding: '0 0 10px' }}>Tipo de acción</legend>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -116,6 +116,9 @@ export default function Accion() {
             </div>
           )}
 
+          <details style={{ border: '1px solid var(--line-soft)', borderRadius: 8, padding: '0 14px' }}>
+            <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Más detalles (notas, respaldo y vista previa)</summary>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 14 }}>
           <div className="field">
             <label htmlFor="notas">Notas (opcional)</label>
             <textarea id="notas" rows={3} className="input" value={notas} onChange={(e) => setNotas(e.target.value)} />
@@ -128,6 +131,18 @@ export default function Accion() {
             </label>
             <input id="respaldo" type="file" style={srOnly} onFocus={() => setFileFocus(true)} onBlur={() => setFileFocus(false)} onChange={(e) => setArchivo(e.target.files?.[0]?.name ?? '')} />
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 16, background: '#0b1038', borderRadius: 8 }}>
+            <h2 id="prev" style={{ fontSize: 15, margin: 0, color: '#fff' }}>Qué se va a firmar</h2>
+            <pre className="mono" style={{ margin: 0, padding: 16, background: '#070b2a', borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#c9cff5', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{payload}</pre>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+              <span style={{ color: 'var(--dark-muted)' }}>SHA-256 (vista previa)</span>
+              <span className="mono" style={{ color: 'var(--accent)', overflowWrap: 'anywhere' }}>{hash || 'calculando…'}</span>
+            </div>
+            <span style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--dark-muted)' }}>El hash se ancla en la Blockchain Federal Argentina (BFA). Los datos quedan en Syntra; en la cadena solo queda la huella.</span>
+          </div>
+            </div>
+          </details>
 
           {estado === 'ok' ? (
             <div role="status" style={{ background: 'var(--ok-bg)', color: 'var(--ok-fg)', borderRadius: 8, padding: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
@@ -145,15 +160,6 @@ export default function Accion() {
           <span aria-live="polite" style={srOnly}>{estado === 'firmando' ? 'Firmando registro…' : ''}</span>
         </form>
 
-        <aside aria-labelledby="prev" className="card-dark" style={{ flex: '2 1 300px', minWidth: 0, padding: 'clamp(16px, 5vw, 24px)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h2 id="prev" style={{ fontSize: 15 }}>Qué se va a firmar</h2>
-          <pre className="mono" style={{ margin: 0, padding: 16, background: '#070b2a', borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#c9cff5', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{payload}</pre>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
-            <span style={{ color: 'var(--dark-muted)' }}>SHA-256 (vista previa)</span>
-            <span className="mono" style={{ color: 'var(--accent)', overflowWrap: 'anywhere' }}>{hash || 'calculando…'}</span>
-          </div>
-          <span style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--dark-muted)' }}>El hash se ancla en la Blockchain Federal Argentina (BFA). Los datos quedan en Syntra; en la cadena solo queda la huella.</span>
-        </aside>
       </div>
     </div>
   );

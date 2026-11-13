@@ -202,7 +202,9 @@ export const tiposAccion = [
   { id: 'riego', label: 'Riego', f1: 'Fuente de agua', v1: 'Pozo 2', f2: 'Lámina', v2: '25 mm' },
   { id: 'cosecha', label: 'Cosecha', f1: 'Destino', v1: 'Acopio Río Seco', f2: 'Rinde', v2: '3.400 kg/ha' },
   { id: 'monitoreo', label: 'Monitoreo de biodiversidad', f1: 'Polinizadores (individuos / 15 min)', v1: '34', f2: 'Enemigos naturales (individuos)', v2: '12' },
+  { id: 'reposicion', label: 'Reposición por garantía', f1: 'Corredor', v1: 'B · central N–S', f2: 'Plantas repuestas', v2: '120 (pérdida por ola de calor)' },
 ];
 
 export * from './plan';
 export * from './capas';
+export * from './especies';

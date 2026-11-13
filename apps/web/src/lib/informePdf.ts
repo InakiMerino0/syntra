@@ -2,14 +2,15 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import {
-  establecimiento, ecorregion, certificaciones, ejes, corredores, biodiversidadLote3, monitoreos,
+  establecimiento, ecorregion, certificaciones, corredores, biodiversidadLote3, monitoreos,
   seguimientoCorredores, eventos, capas, parchesBosque, zonasRendimiento, zonasInundables, ndviSerie, reqLabel,
 } from '@synta/data';
-import type { Lote, LatLng, ReqStatus } from '@synta/data';
-import { INFORME_NOMBRE, RED_SELLADO, URL_VERIFICACION } from './informe';
-import type { ArchivoEvidencia, ConstruirEvidencia, DescargarInforme, EvidenciaInforme } from './informe';
-
-const ID_INFORME = 'SYN-2026-000184';
+import type { Corredor, Lote, LatLng, ReqStatus } from '@synta/data';
+import {
+  INFORME_NOMBRE, RED_SELLADO, URL_VERIFICACION, DICTAMEN_LABEL, ESTADO_REVISION, TITULO_DICTAMEN,
+  informeId, corredoresDeCert, limpiarOtrasCerts, revisionCompleta,
+} from './informe';
+import type { ArchivoEvidencia, RevisionAuditor, ConstruirEvidencia, DescargarInforme, EvidenciaInforme } from './informe';
 
 // ---------- Hashing helpers (hex without the 0x prefix everywhere) ----------
 
@@ -44,8 +45,11 @@ function fechaCorta(iso: string): string {
 
 // ---------- Evidence ----------
 
-export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fsa') => {
+export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fsa', revisionIn = null) => {
   const cert = certificaciones.find((c) => c.id === certId) ?? certificaciones.find((c) => c.id === 'fsa') ?? certificaciones[0];
+  const idInforme = informeId(cert.id);
+  const corrCert = corredoresDeCert(cert);
+  const revision = revisionCompleta(revisionIn) ? revisionIn : null;
   const emitido = new Date().toISOString();
   const totalHa = lotes.reduce((s, l) => s + l.ha, 0);
 
@@ -83,11 +87,18 @@ export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fs
     {
       archivo: `cumplimiento-${cert.id}.json`,
       descripcion: `Requisitos y estado de ${cert.label}`,
-      contenido: { certificacion: { id: cert.id, label: cert.label }, requisitos: cert.items.map((r) => ({ ...r, estado: reqLabel[r.status] })), ejes, biodiversidad: biodiversidadLote3 },
+      contenido: { certificacion: { id: cert.id, label: cert.label }, requisitos: cert.items.map((r) => ({ ...r, estado: reqLabel[r.status] })), ...(corrCert.length ? { biodiversidad: biodiversidadLote3 } : {}) },
     },
-    { archivo: 'corredores.json', descripcion: 'Diseño y seguimiento de corredores biológicos', contenido: { corredores, seguimiento: seguimientoCorredores } },
+    ...(corrCert.length ? [{
+      archivo: 'corredores.json', descripcion: 'Diseño y seguimiento de corredores biológicos',
+      contenido: { corredores: corrCert.map(({ closes: _c, ...c }) => c), seguimiento: seguimientoCorredores },
+    }] : []),
     { archivo: 'monitoreos-campo.json', descripcion: 'Conteos de polinizadores y enemigos naturales', contenido: monitoreos },
-    { archivo: 'registros-campo.json', descripcion: 'Registros de campo firmados (eventos)', contenido: eventos },
+    { archivo: 'registros-campo.json', descripcion: 'Registros de campo firmados (eventos)', contenido: eventos.map((e) => ({ ...e, title: limpiarOtrasCerts(e.title, cert) })) },
+    ...(revision ? [{
+      archivo: 'revision-auditor.json', descripcion: 'Dictamen de revisión externa cargado por el productor',
+      contenido: { certificacion: { id: cert.id, label: cert.label }, cargadoPor: 'productor', nota: 'Dictamen de un auditor externo; no es una firma de Syntra.', revision },
+    }] : []),
   ];
 
   const archivos: ArchivoEvidencia[] = [];
@@ -97,7 +108,7 @@ export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fs
   }
 
   // Manifest: the list of every previous file with its hash. Its own hash joins the Merkle tree.
-  const manifiesto = enc.encode(JSON.stringify({ informe: ID_INFORME, emitido, archivos: archivos.map((a) => ({ archivo: a.archivo, bytes: a.bytes, sha256: a.hash })) }, null, 2));
+  const manifiesto = enc.encode(JSON.stringify({ informe: idInforme, emitido, archivos: archivos.map((a) => ({ archivo: a.archivo, bytes: a.bytes, sha256: a.hash })) }, null, 2));
   const hashManifiesto = await sha256Hex(manifiesto);
   archivos.push({ archivo: 'manifest.json', descripcion: 'Manifiesto: lista de archivos con su huella SHA-256', bytes: manifiesto.length, hash: hashManifiesto });
 
@@ -110,7 +121,7 @@ export const construirEvidencia: ConstruirEvidencia = async (lotes, certId = 'fs
   const fecha = fechaCorta(new Date(new Date(emitido).getTime() + segundos * 1000).toISOString()) + ' (hora Argentina)';
 
   return {
-    id: ID_INFORME, emitido, certObjetivo: cert.label, lotes, archivos,
+    id: idInforme, certId: cert.id, emitido, certObjetivo: cert.label, lotes, archivos, revision,
     sellado: { hashManifiesto, raizMerkle, transaccion, bloque, fecha },
   } satisfies EvidenciaInforme;
 };
@@ -240,7 +251,7 @@ class Pdf {
 }
 
 /** Draws lots, forest patches and corridors as vector lines inside a box. */
-function dibujarMapa(p: Pdf, lotes: Lote[], x0: number, y0: number, bw: number, bh: number) {
+function dibujarMapa(p: Pdf, lotes: Lote[], corredores: Corredor[], x0: number, y0: number, bw: number, bh: number) {
   const d = p.doc;
   const puntos: LatLng[] = [...lotes.flatMap((l) => l.polygon), ...parchesBosque.flatMap((b) => b.polygon), ...corredores.flatMap((c) => c.line)];
   const lats = puntos.map((q) => q[0]), lngs = puntos.map((q) => q[1]);
@@ -283,7 +294,8 @@ function dibujarMapa(p: Pdf, lotes: Lote[], x0: number, y0: number, bw: number, 
 async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   const p = new Pdf(ev);
   const d = p.doc;
-  const cert = certificaciones.find((c) => c.label === ev.certObjetivo) ?? certificaciones[0];
+  const cert = certificaciones.find((c) => c.id === ev.certId) ?? certificaciones[0];
+  const corrCert = corredoresDeCert(cert);
   const totalHa = ev.lotes.reduce((s, l) => s + l.ha, 0);
   const s = ev.sellado;
 
@@ -304,16 +316,18 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   ]);
 
   // 2 Estado de cumplimiento
-  p.section(2, 'Estado de cumplimiento', true);
+  p.section(2, `Estado de cumplimiento - ${cert.label}`, true);
   p.table(
     [{ title: 'Requisito', w: 50 }, { title: 'Estado', w: 26 }, { title: 'Evidencia', w: 48 }, { title: 'Cómo completarlo', w: 56 }],
     cert.items.map((r) => [{ text: r.rule }, { text: reqLabel[r.status], color: ESTADO_COLOR[r.status], bold: true }, { text: r.evidence }, { text: r.fix ?? '-' }]),
   );
-  const totalCorr = corredores.reduce((a, c) => a + c.ha, 0);
-  const impl = corredores.filter((c) => c.status === 'Implantado').reduce((a, c) => a + c.ha, 0);
-  const fmtHa = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',');
-  p.y += 3;
-  p.paragraph(`Plan de corredores: ${fmtHa(totalCorr)} ha en total (${fmtHa(impl)} ha implantadas, ${fmtHa(totalCorr - impl)} ha planificadas). Biodiversidad del Lote 3: ${biodiversidadLote3.actual} actual -> ${biodiversidadLote3.proyectado} proyectado.`, M, W - 2 * M, { size: 9 });
+  if (corrCert.length) {
+    const totalCorr = corrCert.reduce((a, c) => a + c.ha, 0);
+    const impl = corrCert.filter((c) => c.status === 'Implantado').reduce((a, c) => a + c.ha, 0);
+    const fmtHa = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+    p.y += 3;
+    p.paragraph(`Plan de corredores (${corrCert.map((c) => c.id).join(', ')}): ${fmtHa(totalCorr)} ha en total (${fmtHa(impl)} ha implantadas, ${fmtHa(totalCorr - impl)} ha planificadas). Biodiversidad del Lote 3: ${biodiversidadLote3.actual} actual -> ${biodiversidadLote3.proyectado} proyectado.`, M, W - 2 * M, { size: 9 });
+  }
 
   // 3 Paquete de evidencia (QR block needs ~34 mm)
   p.section(3, 'Paquete de evidencia');
@@ -323,7 +337,7 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   d.addImage(qr, 'PNG', W - M - 28, yQr, 28, 28);
   p.font('normal', 6.5, false, C.muted); d.text('Escaneá para verificar en línea', W - M - 14, yQr + 31, { align: 'center' });
   const w3 = COL_W - 32;
-  p.paragraph('El paquete contiene cada archivo de evidencia con su huella digital SHA-256, listados en el inventario de la sección 8.', COL_X, w3);
+  p.paragraph('El paquete contiene cada archivo de evidencia con su huella digital SHA-256, listados en el inventario de la sección 9.', COL_X, w3);
   p.y += 1.5;
   const yAntes = p.y;
   p.fields([['Archivo contenedor', `evidencia-${ev.id}.zip`], ['Política de retención', '5 años desde la emisión']]);
@@ -342,7 +356,7 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   p.section(5, 'Cómo verificarlo');
   [
     'Obtené el SHA-256 de cada archivo de evidencia.',
-    'Compará cada huella con el inventario (sección 8) y con el manifiesto.',
+    'Compará cada huella con el inventario (sección 9) y con el manifiesto.',
     'Recalculá la raíz de Merkle a partir de las huellas del inventario.',
     'Contrastá la raíz con el sello registrado en la BFA (transacción y bloque).',
     'Si un solo dato cambió, la raíz no coincide.',
@@ -358,12 +372,13 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   p.section(6, 'Mapa del establecimiento', true);
   p.ensure(90 + 12);
   p.y += 1;
-  dibujarMapa(p, ev.lotes, M, p.y, 180, 90);
+  dibujarMapa(p, ev.lotes, corrCert, M, p.y, 180, 90);
   p.y += 94;
   // Legend
   let lx = M;
   const leyenda: { txt: string; kind: 'lote' | 'bosque' | 'impl' | 'plan' }[] = [
-    { txt: 'Lotes', kind: 'lote' }, { txt: 'Parches de bosque', kind: 'bosque' }, { txt: 'Corredor implantado', kind: 'impl' }, { txt: 'Corredor planificado', kind: 'plan' },
+    { txt: 'Lotes', kind: 'lote' }, { txt: 'Parches de bosque', kind: 'bosque' },
+    ...(corrCert.length ? [{ txt: 'Corredor implantado', kind: 'impl' as const }, { txt: 'Corredor planificado', kind: 'plan' as const }] : []),
   ];
   leyenda.forEach((it) => {
     if (it.kind === 'lote') { d.setFillColor(0xe8, 0xf1, 0xe3); d.setDrawColor(...C.primary); d.setLineWidth(0.4); d.rect(lx, p.y, 5, 3, 'FD'); }
@@ -378,11 +393,28 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   p.section(7, 'Historial de eventos', true);
   p.table(
     [{ title: 'Fecha', w: 30 }, { title: 'Evento', w: 100 }, { title: 'Fuente', w: 50 }],
-    eventos.map((e) => [{ text: e.date }, { text: `${e.title} (${e.lote})` }, { text: e.source }]),
+    eventos.map((e) => [{ text: e.date }, { text: `${limpiarOtrasCerts(e.title, cert)} (${e.lote})` }, { text: e.source }]),
   );
 
-  // 8 Inventario de archivos
-  p.section(8, 'Inventario de archivos', true);
+  // 8 Revisión del auditor (external; NOT a Syntra signature)
+  p.section(8, 'Revisión del auditor', true);
+  p.fields([['Estado', ESTADO_REVISION]]);
+  const rv = ev.revision;
+  if (revisionCompleta(rv)) {
+    p.paragraph(TITULO_DICTAMEN, M, W - 2 * M, { size: 9.5, bold: true, color: C.primary });
+    p.y += 1;
+    p.fields([
+      ['Auditor', rv.nombre], ['Organismo / certificadora', rv.organismo || '-'], ['Matrícula / ID', rv.matricula || '-'],
+      ['Fecha', rv.fecha ? rv.fecha.split('-').reverse().join('/') : '-'], ['Dictamen', DICTAMEN_LABEL[rv.dictamen]],
+      ['Observaciones', rv.observaciones.trim() || '-'],
+    ]);
+    p.paragraph('Dictamen emitido por un tercero y cargado por el productor; su huella SHA-256 figura en el inventario como revision-auditor.json. No es una firma ni una certificación de Syntra.', COL_X, COL_W, { size: 8.5, color: C.muted });
+  } else {
+    p.paragraph('Todavía no se cargó un dictamen. El perito/auditor de la certificadora revisa este informe y la certificación la otorga la certificadora; Syntra no firma ni certifica.', COL_X, COL_W, { size: 8.5, color: C.muted });
+  }
+
+  // 9 Inventario de archivos
+  p.section(9, 'Inventario de archivos', true);
   p.table(
     [{ title: 'Archivo', w: 38 }, { title: 'Descripción', w: 48 }, { title: 'Bytes', w: 16 }, { title: 'Hash SHA-256', w: 78 }],
     ev.archivos.map((a) => [
@@ -395,8 +427,8 @@ async function generarPdf(ev: EvidenciaInforme): Promise<jsPDF> {
   return d;
 }
 
-export const descargarInforme: DescargarInforme = async (lotes, certId) => {
-  const ev = await construirEvidencia(lotes, certId);
+export const descargarInforme: DescargarInforme = async (lotes, certId, revision) => {
+  const ev = await construirEvidencia(lotes, certId, revision);
   const doc = await generarPdf(ev);
-  doc.save(`syntra-informe-evidencia-${ev.id}.pdf`);
+  doc.save(`syntra-informe-${ev.certId}-${ev.id}.pdf`);
 };

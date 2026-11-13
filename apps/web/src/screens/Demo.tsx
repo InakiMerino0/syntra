@@ -51,9 +51,9 @@ const ESCENAS: Escena[] = [
     ],
   },
   {
-    id: 'blockchain', titulo: 'Evidencia sellada', frase: 'Un escribano digital: si alguien cambia un dato, se detecta',
+    id: 'blockchain', titulo: 'Evidencia sellada', frase: 'Un escribano digital: prueba qué existía y cuándo',
     url: '/trazabilidad',
-    acciones: [{ at: 0.8, scroll: 'Simular alteración' }, { at: 2.2, click: 'Simular alteración' }, { at: 3.6, click: 'Verificar: Corredor A' }],
+    acciones: [{ at: 1.2, scroll: 'Ver registro original' }, { at: 2.4, click: 'Ver registro original' }],
     izq: [
       { tag: 'Huella digital', title: 'SHA-256 + árbol de Merkle', body: 'Cada dato y cada monitoreo' },
     ],

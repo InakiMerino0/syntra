@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { sha256, shortHash } from '@synta/ui';
+import { sha256 } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
 import QR from "../components/QR";
 import { URL_VERIFICACION } from "../lib/informe";
@@ -14,6 +14,8 @@ const resumen = [
 ];
 const DEMO_ID = 8; // record that can be tampered with in the demo
 const payloadDe = (e: Evento, date = e.date) => JSON.stringify({ title: e.title, lote: e.lote, date, source: e.source });
+const payloadBonito = (e: Evento, date = e.date) => JSON.stringify({ title: e.title, lote: e.lote, date, source: e.source }, null, 2);
+const hashBox = { margin: 0, padding: 10, borderRadius: 8, background: 'var(--bg)', fontSize: 12, lineHeight: 1.5, color: '#3A4A41', overflowWrap: 'anywhere', wordBreak: 'break-all' } as const;
 const kinds = Object.entries(eventKinds) as [EventKind, { label: string; color: string }][];
 
 export default function Trazabilidad() {
@@ -24,6 +26,10 @@ export default function Trazabilidad() {
   const [anclados, setAnclados] = useState<Record<number, string>>({});
   const [alterado, setAlterado] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [abierto, setAbierto] = useState<Evento | null>(null);
+  const [vivo, setVivo] = useState('');
+  const [copiedHash, setCopiedHash] = useState(false);
+  const dlg = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -40,7 +46,23 @@ export default function Trazabilidad() {
     if (!anclado) return;
     setChecks((c) => ({ ...c, [e.id]: 'busy' }));
     const [hash] = await Promise.all([sha256(payloadDe(e, fechaActual(e))), new Promise((r) => setTimeout(r, 600))]);
-    setChecks((c) => ({ ...c, [e.id]: shortHash(hash) === shortHash(anclado) ? 'ok' : 'bad' }));
+    setChecks((c) => ({ ...c, [e.id]: hash === anclado ? 'ok' : 'bad' }));
+  }
+
+  const abrir = (e: Evento) => { setAbierto(e); setCopiedHash(false); setTimeout(() => dlg.current?.showModal(), 0); };
+  const cerrar = () => dlg.current?.close();
+
+  useEffect(() => {
+    if (!abierto) return;
+    let alive = true;
+    setVivo('');
+    sha256(payloadDe(abierto, fechaActual(abierto))).then((h) => { if (alive) setVivo(h); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto, alterado]);
+
+  async function copyHash(h: string) {
+    try { await navigator.clipboard.writeText(h); setCopiedHash(true); setTimeout(() => setCopiedHash(false), 2000); } catch { /* blocked */ }
   }
 
   function toggleAlteracion() {
@@ -91,12 +113,12 @@ export default function Trazabilidad() {
                     <span className="muted" style={{ fontSize: 12 }}>{e.lote} · {eventKinds[e.kind].label}</span>
                   </div>
                   <span className="muted" style={{ fontSize: 13 }}>{fechaActual(e)} · Fuente: {e.source}</span>
-                  <span className="mono" style={{ fontSize: 12, color: '#3A4A41', overflowWrap: 'anywhere' }}>hash anclado {anclados[e.id] ? shortHash(anclados[e.id]) : 'calculando…'} · bloque {e.block}</span>
-                  {e.id === DEMO_ID && (
-                    <button type="button" className="chip" style={{ minHeight: 44, alignSelf: 'flex-start', fontSize: 13 }} aria-pressed={alterado} onClick={toggleAlteracion}>
-                      {alterado ? 'Restaurar registro original' : 'Simular alteración'}
-                    </button>
-                  )}
+                  <span className="muted" style={{ fontSize: 12 }}>Hash SHA-256 anclado · bloque {e.block}</span>
+                  <span className="mono" style={{ fontSize: 12, color: '#3A4A41', overflowWrap: 'anywhere', wordBreak: 'break-all' }}>{anclados[e.id] ?? 'calculando…'}</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <button type="button" className="chip" style={{ minHeight: 44, fontSize: 13 }} disabled={!anclados[e.id]} onClick={() => copyHash(anclados[e.id])}>Copiar hash</button>
+                    <button type="button" className="chip" style={{ minHeight: 44, fontSize: 13 }} onClick={() => abrir(e)} aria-label={`Ver registro original: ${e.title}`}>Ver registro original</button>
+                  </div>
                 </div>
                 <div aria-live="polite" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>
                   {st === 'ok' && (
@@ -146,8 +168,51 @@ export default function Trazabilidad() {
             </button>
             <Link to="/informe" className="btn btn-primary" style={{ flex: "1 1 auto" }}>Ver informe</Link>
           </div>
+          <Link to="/verificar" style={{ fontSize: 14, fontWeight: 600, alignSelf: 'flex-start', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>Verificador público →</Link>
         </aside>
       </div>
+      <dialog ref={dlg} aria-labelledby="reg-t" onClose={() => setAbierto(null)} style={{ width: 'min(640px, calc(100vw - 32px))', maxHeight: '90vh', padding: 0, border: '1px solid var(--line-soft)', borderRadius: 12 }}>
+        {abierto && (() => {
+          const e = abierto;
+          const fecha = fechaActual(e);
+          const coincide = vivo && vivo === anclados[e.id];
+          return (
+            <div style={{ padding: 'clamp(16px, 5vw, 24px)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h2 id="reg-t" className="section-title" style={{ margin: 0 }}>Registro original</h2>
+              <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
+                <div><dt className="muted" style={{ display: 'inline' }}>Fuente: </dt><dd style={{ display: 'inline', margin: 0, fontWeight: 600 }}>{e.source}</dd></div>
+                <div><dt className="muted" style={{ display: 'inline' }}>Fecha: </dt><dd style={{ display: 'inline', margin: 0, fontWeight: 600 }}>{fecha}</dd></div>
+                <div><dt className="muted" style={{ display: 'inline' }}>Bloque: </dt><dd style={{ display: 'inline', margin: 0, fontWeight: 600 }}>{e.block} · BFA (simulado)</dd></div>
+              </dl>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Datos exactos que se hashearon</span>
+              <pre className="mono" style={{ ...hashBox, whiteSpace: 'pre-wrap' }}>{payloadBonito(e, fecha)}</pre>
+              <span className="muted" style={{ fontSize: 12 }}>El hash se calcula sobre el JSON compacto (sin sangría) de estos mismos campos.</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>SHA-256 recalculado ahora</span>
+              <div className="mono" style={hashBox}>{vivo || 'calculando…'}</div>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Hash anclado</span>
+              <div className="mono" style={hashBox}>{anclados[e.id] ?? 'calculando…'}</div>
+              <div aria-live="polite" style={{ fontWeight: 700, fontSize: 14, color: coincide ? 'var(--ok-fg)' : 'var(--bad-fg, #B42318)' }}>
+                {vivo ? (coincide ? 'Íntegro ✓ recalculado = anclado' : 'Alterado ✗ el hash recalculado no coincide') : ''}
+              </div>
+              {/foto/i.test(e.source) && (
+                <span className="muted" style={{ fontSize: 13 }}>Respaldo: foto georreferenciada (no incluida en la demo)</span>
+              )}
+              {e.id === DEMO_ID && (
+                <div style={{ borderTop: '1px solid var(--line-soft)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span className="muted" style={{ fontSize: 12 }}>Modo demostración</span>
+                  <button type="button" className="chip" style={{ minHeight: 44, alignSelf: 'flex-start', fontSize: 13 }} aria-pressed={alterado} onClick={toggleAlteracion}>
+                    {alterado ? 'Restaurar registro original' : 'Simular alteración'}
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <button type="button" className="btn btn-secondary" onClick={() => copyHash(anclados[e.id] ?? '')}><span aria-live="polite">{copiedHash ? '¡Copiado!' : 'Copiar hash'}</span></button>
+                <button type="button" className="btn btn-primary" onClick={cerrar}>Cerrar</button>
+              </div>
+            </div>
+          );
+        })()}
+      </dialog>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Badge, ProgressBar } from '@synta/ui';
-import { certificaciones, generarPlan, plazos, prioridadTone } from '@synta/data';
-import type { AccionPlan, Plan as PlanT } from '@synta/data';
+import { certificaciones, fichaEspecies, generarPlan, nivelDe, prioridadTone } from '@synta/data';
+import type { AccionPlan, MezclaCorredor, NivelPlan, Plan as PlanT, ResumenNivel } from '@synta/data';
 
 type Fase = 'idle' | 'running' | 'done';
 
@@ -20,7 +20,8 @@ export default function Plan() {
   const timers = useRef<number[]>([]);
 
   const cert = certificaciones.find((c) => c.id === certId)!;
-  const plan = useMemo(() => generarPlan(certId), [certId]);
+  const nivel = nivelDe(params.get('nivel'));
+  const plan = useMemo(() => generarPlan(certId, nivel), [certId, nivel]);
   const pasos = [
     `Leyendo ${plan.datos.length} datos del establecimiento`,
     `Comparando con ${cert.items.length} requisitos de ${cert.label}`,
@@ -32,9 +33,14 @@ export default function Plan() {
   useEffect(() => clear, []);
   // Reset the generated plan whenever the selected certification changes (button, link or Back).
   useEffect(() => { clear(); setFase('idle'); setHechas(new Set()); }, [certId]);
+  // Changing the tier changes the actions (ids differ), so the checked ones reset but the generated plan stays visible.
+  useEffect(() => { setHechas(new Set()); }, [nivel]);
 
   const elegir = (id: string) => {
-    setParams({ cert: id }, { replace: true });
+    setParams({ cert: id, nivel }, { replace: true });
+  };
+  const elegirNivel = (n: NivelPlan) => {
+    setParams({ cert: certId, nivel: n }, { replace: true });
   };
 
   const generar = () => {
@@ -67,6 +73,11 @@ export default function Plan() {
           ))}
         </div>
         <span className="muted" style={{ fontSize: 13, ...wrap }}>{cert.desc}</span>
+        <h2 id="paso2" className="section-title" style={{ marginTop: 8 }}>2 · ¿Con qué presupuesto?</h2>
+        <div role="group" aria-labelledby="paso2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 12 }}>
+          {plan.niveles.map((n) => <NivelCard key={n.nivel} n={n} activo={n.nivel === nivel} elegir={() => elegirNivel(n.nivel)} />)}
+        </div>
+        <span className="muted" style={{ fontSize: 12, ...wrap }}>Costo relativo respecto del nivel Básico (1×). Sin precios: son proporciones ilustrativas, a ajustar con el equipo.</span>
         <div className="row" style={{ gap: 12, alignItems: 'center' }}>
           <button type="button" className="btn btn-primary" onClick={generar} disabled={fase === 'running'}>
             {fase === 'done' ? 'Volver a generar' : 'Generar plan'}
@@ -91,6 +102,62 @@ export default function Plan() {
         )}
         {fase === 'done' && <Resultado plan={plan} hechas={hechas} toggle={toggle} />}
       </div>
+    </div>
+  );
+}
+
+const fmtCosto = (c: number) => `${c.toLocaleString('es-AR')}×`;
+
+function NivelCard({ n, activo, elegir }: { n: ResumenNivel; activo: boolean; elegir: () => void }) {
+  return (
+    <button
+      type="button"
+      className="card stack"
+      aria-pressed={activo}
+      onClick={elegir}
+      style={{ gap: 8, padding: 16, textAlign: 'left', font: 'inherit', color: 'inherit', cursor: 'pointer', minHeight: 44, borderColor: activo ? 'var(--primary)' : undefined, borderWidth: 2, background: activo ? 'var(--primary-soft)' : undefined, ...wrap }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <strong style={{ fontSize: 16 }}>{n.label}</strong>
+        <span className="display" style={{ fontSize: 20 }}>{fmtCosto(n.costoRelativo)}</span>
+      </div>
+      <span className="muted" style={{ fontSize: 13, lineHeight: 1.4 }}>{n.bajada}</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: 12 }}>
+        <span><strong>{n.ha.toLocaleString('es-AR')}</strong> ha</span>
+        <span><strong>{n.plantas.toLocaleString('es-AR')}</strong> plantas</span>
+        <span>Biodiversidad → <strong>{n.bioProyectada}</strong></span>
+      </div>
+      <span style={{ fontSize: 12 }}><strong>Ejecuta:</strong> {n.ejecuta}</span>
+      <span style={{ fontSize: 12 }}><strong>Garantía de reposición:</strong> {n.garantiaPct ? `${n.garantiaPct}% de las pérdidas` : 'no incluida'}</span>
+      <span><Badge tone={n.sinCubrir.length ? 'warn' : 'ok'}>Cubre {n.cumplidosConPlan}/{n.totalRequisitos} requisitos</Badge></span>
+      {n.sinCubrir.length > 0 && <span style={{ fontSize: 12, color: 'var(--warn-fg)' }}>Quedan sin cubrir: {n.sinCubrir.join('; ')}</span>}
+    </button>
+  );
+}
+
+function Especies({ m }: { m: MezclaCorredor }) {
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <div className="stack" style={{ gap: 2 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--primary-ink)', ...wrap }}>{m.titulo}</h3>
+        <span className="muted" style={{ fontSize: 13, ...wrap }}>{m.ha.toLocaleString('es-AR')} ha · {m.plantas.toLocaleString('es-AR')} plantas · {m.nota}</span>
+      </div>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 10 }}>
+        {m.especies.map(({ especie: e, densidad, plantas }) => (
+          <li key={e.id} className="card stack" style={{ gap: 6, padding: 14, fontSize: 13, ...wrap }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <strong style={{ fontSize: 14 }}>{e.nombre} <em className="muted" style={{ fontWeight: 400 }}>{e.cientifico}</em></strong>
+              <span className="muted">{e.estrato}</span>
+            </div>
+            <span className="muted">{e.rol}</span>
+            <span><strong>Densidad:</strong> {densidad.toLocaleString('es-AR')} plantas/ha ({plantas.toLocaleString('es-AR')} en el corredor)</span>
+            <span><strong>Época:</strong> {e.epoca}</span>
+            <span><strong>Riego:</strong> {e.riego}</span>
+            <span><strong>Cuidados:</strong> {e.cuidados}</span>
+            <span><Badge tone={e.toleraAnegamiento ? 'ok' : 'warn'}>{e.toleraAnegamiento ? 'Tolera anegamiento' : 'No tolera anegamiento'}</Badge></span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -133,18 +200,37 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
         <section className="stack" style={{ flex: '3 1 480px', minWidth: 0, gap: 20 }} aria-labelledby="acciones">
           <h2 id="acciones" className="section-title">Qué hacer y cuándo</h2>
           {plan.acciones.length === 0 && <p className="card muted" style={{ margin: 0 }}>No hay mejoras necesarias: ya cumplís todos los requisitos.</p>}
-          {plazos.map((pz) => {
-            const items = plan.acciones.filter((a) => a.plazo === pz);
+          {plan.fases.map((f) => {
+            const items = plan.acciones.filter((a) => a.fase === f.id);
             if (!items.length) return null;
             return (
-              <div key={pz} className="stack" style={{ gap: 10, borderLeft: '3px solid var(--primary)', paddingLeft: 14, minWidth: 0 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--primary-ink)' }}>{pz} <span className="muted" style={{ fontWeight: 500 }}>· {items.length}</span></h3>
+              <div key={f.id} className="stack" style={{ gap: 10, borderLeft: '3px solid var(--primary)', paddingLeft: 14, minWidth: 0 }}>
+                <div className="stack" style={{ gap: 2 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--primary-ink)', ...wrap }}>{f.anio} · {f.titulo} <span className="muted" style={{ fontWeight: 500 }}>· {items.length}</span></h3>
+                  <span className="muted" style={{ fontSize: 12, ...wrap }}>{f.periodo}</span>
+                  <span className="muted" style={{ fontSize: 13, lineHeight: 1.4, ...wrap }}>{f.descripcion}</span>
+                </div>
+                {f.id === 'f12' && (
+                  <div style={{ background: 'var(--ok-bg)', color: 'var(--ok-fg)', borderRadius: 8, padding: '8px 12px', fontSize: 13, lineHeight: 1.45 }}>
+                    <strong>Garantía de reposición:</strong> {plan.garantia.texto}
+                  </div>
+                )}
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {items.map((a) => <Accion key={a.id} a={a} done={hechas.has(a.id)} toggle={toggle} />)}
                 </ul>
               </div>
             );
           })}
+          {plan.mezclas.length > 0 && (
+            <section className="card stack" style={{ gap: 14 }} aria-labelledby="especies">
+              <h2 id="especies" className="section-title">Especies y manejo</h2>
+              <span className="muted" style={{ fontSize: 13 }}>Qué plantar en cada corredor, a qué densidad, cuándo, cómo regar y qué cuidados necesita.</span>
+              {plan.mezclas.map((m) => <Especies key={m.corredorId} m={m} />)}
+              <span style={{ fontSize: 12, background: 'var(--warn-bg)', color: 'var(--warn-fg)', borderRadius: 8, padding: '8px 12px' }}>
+                {fichaEspecies.nota}{fichaEspecies.validadoPor ? ` (validó ${fichaEspecies.validadoPor})` : ''}. Densidades, épocas y cuidados son valores de referencia.
+              </span>
+            </section>
+          )}
         </section>
 
         <aside className="stack" style={{ flex: '2 1 300px', minWidth: 0, gap: 16 }}>
@@ -199,6 +285,7 @@ function Accion({ a, done, toggle }: { a: AccionPlan; done: boolean; toggle: (id
           </div>
           <span className="muted" style={{ fontSize: 13, lineHeight: 1.45 }}>{a.detalle}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 12 }}>
+            <span><strong>Cuándo:</strong> {a.momento}</span>
             <span><strong>Lote:</strong> {a.lote}</span>
             <span><strong>Esfuerzo:</strong> {a.esfuerzo}</span>
             <span style={{ color: 'var(--primary-ink)', fontWeight: 600 }}>{a.impacto}</span>

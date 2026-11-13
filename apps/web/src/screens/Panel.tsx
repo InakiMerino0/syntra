@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { indicadoresImpacto, serviciosEcosistemicos, fraseImpacto } from '../lib/impacto';
 import { Badge, ProgressBar } from '@synta/ui';
 import HashTodo from '../components/HashTodo';
 import { useLotes } from '../store/lotes';
-import { ecorregion, establecimiento, kpis, ejes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds } from '@synta/data';
+import { ecorregion, establecimiento, kpis, ejes, certificaciones, corredores, biodiversidadLote3, eventos, eventKinds, reqLabel } from '@synta/data';
 
 const cert = certificaciones.find((c) => c.id === 'fsa')!;
 const count = (s: string) => cert.items.filter((i) => i.status === s).length;
@@ -18,7 +20,10 @@ const big = { fontSize: 26 };
 const sectionHead = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } as const;
 const smallLink = { fontSize: 13, fontWeight: 600, minHeight: 44, display: 'inline-flex', alignItems: 'center' } as const;
 
+const ejeCert: Record<string, string> = { 'Provincial (Córdoba)': 'cordoba', 'Nacional': 'nacional', 'Internacional (EUDR)': 'eudr', 'Certificaciones': 'fsa' };
+
 export default function Panel() {
+  const [open, setOpen] = useState<string | null>(null);
   const lotes = useLotes();
   const totalHa = lotes.reduce((sum, l) => sum + l.ha, 0);
   const kpisVivos = kpis.map((k) => k.label === 'Superficie mapeada' ? { ...k, value: `${fmtHa(totalHa)} ha`, sub: plural(lotes.length, 'lote', 'lotes') } : k);
@@ -76,18 +81,81 @@ export default function Panel() {
 
       <section aria-labelledby="ejes" className="stack">
         <h2 id="ejes" className="section-title">Cumplimiento por eje</h2>
-        <div className="grid-auto">
-          {ejes.map((e) => (
-            <div key={e.name} className="card stack" style={{ gap: 14 }}>
-              <div style={sectionHead}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{e.name}</span>
-                <Badge tone={e.tone}>{e.status}</Badge>
+        <p className="muted" style={{ margin: 0, fontSize: 13 }}>Tocá un eje para ver qué se cumple y qué falta.</p>
+        <div className="grid-auto" style={{ alignItems: 'start' }}>
+          {ejes.map((e) => {
+            const certId = ejeCert[e.name];
+            const c = certificaciones.find((x) => x.id === certId);
+            const abierto = open === e.name;
+            const panelId = `eje-${certId}`;
+            return (
+              <div key={e.name} className="card stack" style={{ gap: 14 }}>
+                <button
+                  type="button"
+                  aria-expanded={abierto}
+                  aria-controls={panelId}
+                  onClick={() => setOpen(abierto ? null : e.name)}
+                  className="stack"
+                  style={{ gap: 14, background: 'none', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer', color: 'inherit', font: 'inherit', width: '100%', minHeight: 44 }}
+                >
+                  <div style={sectionHead}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{e.name}</span>
+                    <Badge tone={e.tone}>{e.status}</Badge>
+                  </div>
+                  <span className="display" style={{ fontSize: 40, lineHeight: 1 }}>{e.pct}%</span>
+                  <ProgressBar value={e.pct} tone={e.tone} label={`Cumplimiento ${e.name}`} />
+                  <span className="muted" style={{ fontSize: 12 }}>{e.detail}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>{abierto ? 'Ocultar requisitos ▲' : 'Ver requisitos ▼'}</span>
+                </button>
+                {abierto && c && (
+                  <div id={panelId} className="stack" style={{ gap: 12 }}>
+                    <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 12 }}>
+                      {c.items.map((it) => (
+                        <li key={it.rule} className="stack" style={{ gap: 4 }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>{it.rule}</span>
+                            <Badge tone={it.status}>{reqLabel[it.status]}</Badge>
+                          </div>
+                          <span className="muted" style={{ fontSize: 12 }}>{it.evidence}</span>
+                          {it.fix && <span style={{ fontSize: 12 }}><strong>Para completarlo:</strong> {it.fix}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="row" style={{ gap: 12 }}>
+                      <Link to={`/plan?cert=${certId}`} style={smallLink}>Ver plan</Link>
+                      <Link to={`/informe?cert=${certId}`} style={smallLink}>Ver informe</Link>
+                    </div>
+                    {certId === 'fsa' && <span className="muted" style={{ fontSize: 12 }}>También disponibles: <Link to="/plan?cert=rtrs">RTRS</Link> · <Link to="/plan?cert=iscc">ISCC</Link></span>}
+                  </div>
+                )}
               </div>
-              <span className="display" style={{ fontSize: 40, lineHeight: 1 }}>{e.pct}%</span>
-              <ProgressBar value={e.pct} tone={e.tone} label={`Cumplimiento ${e.name}`} />
-              <span className="muted" style={{ fontSize: 12 }}>{e.detail}</span>
+            );
+          })}
+        </div>
+      </section>
+
+      <section aria-labelledby="impacto" className="stack">
+        <h2 id="impacto" className="section-title">Impacto social y ambiental</h2>
+        <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+          {fraseImpacto} Cifras calculadas con las hectáreas del plan; las marcadas como estimado usan supuestos de planificación a validar con técnicos locales.
+        </p>
+        <div className="grid-auto" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+          {indicadoresImpacto.map((i) => (
+            <div key={i.id} className="card stack" style={{ gap: 6, padding: '18px 20px' }}>
+              <div style={sectionHead}>
+                <span className="muted" style={{ fontSize: 13 }}>{i.label}</span>
+                {i.estimado && <Badge tone="warn">estimado</Badge>}
+              </div>
+              <span className="display" style={{ fontSize: 26 }}>{i.value}</span>
+              <span className="muted" style={{ fontSize: 12 }}>{i.sub}</span>
             </div>
           ))}
+          <div className="card stack" style={{ gap: 8, padding: '18px 20px' }}>
+            <span className="muted" style={{ fontSize: 13 }}>Servicios para la comunidad</span>
+            <ul aria-label="Servicios ecosistémicos" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {serviciosEcosistemicos.map((s) => <li key={s}><span className="badge badge-ok">{s}</span></li>)}
+            </ul>
+          </div>
         </div>
       </section>
 
