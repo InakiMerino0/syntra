@@ -173,8 +173,8 @@ export default function Informe() {
         <Sec n={6} titulo="Mapa">
           <svg viewBox="0 0 400 260" role="img" aria-label="Esquema de los lotes del establecimiento con los corredores" style={{ width: '100%', maxWidth: 520, height: 'auto', borderRadius: 8 }}>
             <rect width="400" height="260" fill="#E9EDE4" />
-            <polygon points="40,30 150,22 156,110 50,118" fill="#CFE3D5" stroke="#1D6A47" strokeWidth="2" />
-            <polygon points="168,26 258,32 255,110 165,112" fill="#CFE3D5" stroke="#1D6A47" strokeWidth="2" />
+            <polygon points="40,30 150,22 156,110 50,118" fill="#CFE3D5" stroke="#1b2370" strokeWidth="2" />
+            <polygon points="168,26 258,32 255,110 165,112" fill="#CFE3D5" stroke="#1b2370" strokeWidth="2" />
             <polygon points="50,130 160,124 172,220 58,232" fill="#FBE3C3" stroke="#C2620E" strokeWidth="2" />
             <polygon points="182,128 285,120 300,210 186,222" fill="#F3D0CC" stroke="#B42318" strokeWidth="2" strokeDasharray="5 3" />
             <line x1="52" y1="134" x2="160" y2="128" stroke="#D99A00" strokeWidth="5" />

@@ -145,7 +145,7 @@ export default function Demo() {
     <div className="demo-root" onClick={() => t < 0 && iniciar()}>
       <div className="demo-stage" style={{ transform: `translate(-50%, -50%) scale(${escala})` }}>
         <header className="demo-head">
-          <div className="demo-brand"><Logo size={44} color="#7BC59A" /><span>SYNTRA</span></div>
+          <div className="demo-brand"><Logo size={44} color="#8dc63f" /><span>SYNTRA</span></div>
           {!outro && (
             <div key={escena.id} className="demo-step">
               <span className="demo-step-n">{idx + 1}/{ESCENAS.length}</span>

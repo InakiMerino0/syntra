@@ -106,7 +106,7 @@ function Certificacion({ kind, onBio }: { kind: Kind; onBio: () => void }) {
         <div className="card-dark stack" style={{ flex: '1 1 240px' }}>
           <span style={{ fontSize: 13, color: 'var(--dark-muted)' }}>Avance hacia {cert.label}</span>
           <span className="display" style={{ fontSize: 48, lineHeight: 1 }}>{ok}/{total}</span>
-          <span style={{ fontSize: 14, color: '#c3d2c8' }}>requisitos cumplidos · {malas} {malas === 1 ? 'mejora necesaria' : 'mejoras necesarias'}{faltan > 0 && ` · ${faltan} ${faltan === 1 ? 'dato faltante' : 'datos faltantes'}`}</span>
+          <span style={{ fontSize: 14, color: '#c9cff5' }}>requisitos cumplidos · {malas} {malas === 1 ? 'mejora necesaria' : 'mejoras necesarias'}{faltan > 0 && ` · ${faltan} ${faltan === 1 ? 'dato faltante' : 'datos faltantes'}`}</span>
           <ProgressBar value={Math.round((ok / total) * 100)} label={`Avance hacia ${cert.label}`} />
           {malas > 0 && (
             <button type="button" className="btn btn-accent" style={{ marginTop: 8 }} onClick={onBio}>Ver corredores recomendados</button>
@@ -298,8 +298,8 @@ function Seguimiento({ kind }: { kind: Kind }) {
               <line x1="50" y1={y(0.1)} x2="790" y2={y(0.1)} stroke="#DDE2DA" /><text x="0" y={y(0.1) + 4}>0,1</text>
               {s.map((p) => <text key={p.anio} x={x(p.anio)} y="205" textAnchor="middle">{p.anio}</text>)}
             </g>
-            <polyline points={pts} fill="none" stroke="#1D6A47" strokeWidth="2.5" strokeLinejoin="round" />
-            {s.map((p) => <circle key={p.anio} cx={x(p.anio)} cy={y(p.ndvi)} r="4" fill="#1D6A47" />)}
+            <polyline points={pts} fill="none" stroke="#1b2370" strokeWidth="2.5" strokeLinejoin="round" />
+            {s.map((p) => <circle key={p.anio} cx={x(p.anio)} cy={y(p.ndvi)} r="4" fill="#1b2370" />)}
           </svg>
         </figure>
       </section>
@@ -362,7 +362,7 @@ function Satelital() {
             <line x1="40" y1="180" x2="790" y2="180" stroke="#DDE2DA" /><text x="0" y="184">0,1</text>
             <text x="40" y="205">2024</text><text x="400" y="205">2025</text><text x="750" y="205">2026</text>
           </g>
-          <polyline points={pts} fill="none" stroke="#1D6A47" strokeWidth="2.5" strokeLinejoin="round" />
+          <polyline points={pts} fill="none" stroke="#1b2370" strokeWidth="2.5" strokeLinejoin="round" />
         </svg>
       </figure>
     </div>

@@ -1,28 +1,29 @@
 /* Syntra design tokens + shared primitives. Screens should use these classes instead of re-inventing them. */
 :root {
-  --bg: #f5f6f1;
+  --bg: #f4f5fa;
   --surface: #ffffff;
-  --ink: #15211b;
-  --muted: #55615a;
-  --line: #dde2da;
-  --line-soft: #eef1ec;
-  --input: #c9d0c6;
-  --primary: #1d6a47;
-  --primary-ink: #14492f;
-  --primary-soft: #e3f0e8;
-  --dark: #13261c;
-  --dark-2: #21402f;
-  --dark-line: #2d4a39;
-  --dark-ink: #e8efe9;
-  --dark-muted: #9fb3a6;
-  --accent: #7bc59a;
+  --ink: #0f1433;
+  --muted: #575d7d;
+  --line: #dcdfec;
+  --line-soft: #eef0f7;
+  --input: #c7cbe0;
+  --primary: #1b2370;
+  --primary-ink: #0f1550;
+  --primary-soft: #e7e9f7;
+  --dark: #0b1033;
+  --dark-2: #171d52;
+  --dark-line: #262d66;
+  --dark-ink: #eef0ff;
+  --dark-muted: #a4aad3;
+  --accent: #8dc63f;
   --corridor: #ffd166;
-  --ok-bg: #e3f0e8; --ok-fg: #14492f; --ok-bar: #1d6a47;
+  --ok-bg: #e8f5dc; --ok-fg: #2f6b12; --ok-bar: #5aa02c;
   --warn-bg: #fdf0dc; --warn-fg: #8a3f07; --warn-bar: #c2620e;
   --bad-bg: #fde7e5; --bad-fg: #8f1c13; --bad-bar: #b42318;
   --font: 'Inter', system-ui, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-brand: 'Oswald', 'Inter', sans-serif;
   --radius: 12px;
   --sidebar-w: 240px;
   --topbar-h: 56px;
@@ -46,11 +47,11 @@ html { -webkit-text-size-adjust: 100%; }
   padding: 24px 16px; display: flex; flex-direction: column; gap: 4px;
 }
 .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 24px; }
-.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 12px; min-height: 44px; font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--dark-ink); text-decoration: none; }
+.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 12px; min-height: 44px; font-family: var(--font-brand); font-size: 26px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--dark-ink); text-decoration: none; }
 .sidebar-logo:hover { color: #fff; }
 .sidebar-close { display: none; }
 .sidebar a.nav-link { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 8px; color: #c9d6cd; font-size: 14px; text-decoration: none; }
-.sidebar a.nav-link:hover { background: #1a3326; color: #fff; }
+.sidebar a.nav-link:hover { background: #171d52; color: #fff; }
 .sidebar a.nav-link.active { background: var(--dark-2); color: #fff; font-weight: 600; }
 .sidebar-foot { margin-top: auto; padding: 12px; font-size: 12px; color: var(--dark-muted); }
 .content { min-width: 0; margin-left: var(--sidebar-w); }
@@ -77,8 +78,8 @@ html { -webkit-text-size-adjust: 100%; }
     display: inline-flex; align-items: center; justify-content: center;
     background: transparent; color: var(--dark-ink); cursor: pointer;
   }
-  .topbar-menu:hover, .sidebar-close:hover { background: #1a3326; }
-  .topbar-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--dark-ink); text-decoration: none; }
+  .topbar-menu:hover, .sidebar-close:hover { background: #171d52; }
+  .topbar-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-family: var(--font-brand); font-size: 22px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--dark-ink); text-decoration: none; }
   .topbar-logo:hover { color: #fff; }
 
   .drawer-backdrop {
@@ -135,7 +136,7 @@ html { -webkit-text-size-adjust: 100%; }
 .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--input); }
 .btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
 .btn-accent { background: var(--accent); color: var(--dark); font-weight: 700; }
-.btn-accent:hover { background: #a6dcbb; color: var(--dark); }
+.btn-accent:hover { background: #b5dc7a; color: var(--dark); }
 .btn-ghost-dark { background: transparent; color: var(--dark-ink); border-color: #4f6e5b; }
 
 .chip { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--input); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }

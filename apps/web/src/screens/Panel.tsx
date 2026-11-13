@@ -13,7 +13,7 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
 const bio = biodiversidadLote3;
 
 const sub = { fontSize: 13, color: 'var(--dark-muted)' };
-const subLight = { fontSize: 14, color: '#c3d2c8' };
+const subLight = { fontSize: 14, color: '#c9cff5' };
 const big = { fontSize: 26 };
 const sectionHead = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } as const;
 const smallLink = { fontSize: 13, fontWeight: 600, minHeight: 44, display: 'inline-flex', alignItems: 'center' } as const;

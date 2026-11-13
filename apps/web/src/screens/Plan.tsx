@@ -116,7 +116,7 @@ function Resultado({ plan, hechas, toggle }: { plan: PlanT; hechas: Set<string>;
           <Stat label={r.rinde ? `Masa de semilla de ${r.rinde.cultivo}*` : 'Masa de semilla'} value={r.rinde ? `+${r.rinde.pct}%` : '—'} />
         </div>
         <div className="stack" style={{ gap: 6 }}>
-          <span style={{ fontSize: 13, color: '#c3d2c8' }}>Con lo que marcaste como hecho: {cumplidosAhora}/{r.totalRequisitos} requisitos · {hechas.size}/{plan.acciones.length} acciones</span>
+          <span style={{ fontSize: 13, color: '#c9cff5' }}>Con lo que marcaste como hecho: {cumplidosAhora}/{r.totalRequisitos} requisitos · {hechas.size}/{plan.acciones.length} acciones</span>
           <ProgressBar value={pct} label={`Avance hacia ${r.certLabel} con las acciones hechas`} />
         </div>
         <span style={{ fontSize: 12, color: 'var(--dark-muted)', ...wrap }}>

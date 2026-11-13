@@ -4,11 +4,12 @@ import './styles.css';
 
 export type Tone = 'ok' | 'warn' | 'bad';
 
-export function Logo({ size = 28, color = '#7BC59A' }: { size?: number; color?: string }) {
+export function Logo({ size = 28, color = '#8dc63f' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" aria-hidden="true">
-      <path d="M14 2 L25 8.5 V19.5 L14 26 L3 19.5 V8.5 Z" fill="none" stroke={color} strokeWidth="2" />
-      <path d="M9 16 C11 10, 17 9, 19 12 C16 13, 13 15, 12 20" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      {/* Syntra leaf (as on the "A" of the wordmark) */}
+      <path d="M4 24 C4 13, 11 5, 25 3 C25 15, 18 23, 6 24 Z" fill={color} />
+      <path d="M6 23 C11 17, 15 12, 20 8" fill="none" stroke="rgba(0,0,0,0.28)" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   );
 }

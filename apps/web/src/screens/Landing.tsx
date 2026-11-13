@@ -26,7 +26,7 @@ export default function Landing() {
           <h1 className="display" style={{ margin: 0, fontSize: 'clamp(34px, 5vw, 52px)', lineHeight: 1.05, letterSpacing: -1.5 }}>
             Certificá para exportar. Identificamos las mejoras necesarias y cómo lograrlas.
           </h1>
-          <p style={{ margin: 0, fontSize: 'clamp(17px, 2.2vw, 19px)', lineHeight: 1.55, color: '#C3D2C8' }}>
+          <p style={{ margin: 0, fontSize: 'clamp(17px, 2.2vw, 19px)', lineHeight: 1.55, color: '#c9cff5' }}>
             Ayudamos a productores y agroexportadores a acceder a mercados internacionales: adaptamos los parámetros a cada certificación y te indicamos cómo incorporar biodiversidad para cumplirla.
           </p>
           <ol style={{ listStyle: 'none', padding: 0, margin: '16px 0 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: 16 }}>
@@ -34,7 +34,7 @@ export default function Landing() {
               <li key={s.n} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 18, border: '1px solid var(--dark-line)', borderRadius: 12 }}>
                 <span className="mono" style={{ fontSize: 12, color: 'var(--accent)' }}>{s.n}</span>
                 <strong style={{ fontSize: 15 }}>{s.title}</strong>
-                <span style={{ fontSize: 13, lineHeight: 1.45, color: '#B3C4B9' }}>{s.text}</span>
+                <span style={{ fontSize: 13, lineHeight: 1.45, color: '#b8bde0' }}>{s.text}</span>
               </li>
             ))}
           </ol>

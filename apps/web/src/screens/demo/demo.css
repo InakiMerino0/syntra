@@ -23,7 +23,7 @@
 .demo-head { position: absolute; top: 48px; left: 72px; right: 72px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
 .demo-brand { display: flex; align-items: center; gap: 14px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 38px; letter-spacing: 1px; }
 .demo-step { display: flex; align-items: center; gap: 16px; animation: demo-in 0.5s ease both; }
-.demo-step-n { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #7bc59a; border: 1.5px solid rgba(123,197,154,0.6); border-radius: 999px; padding: 6px 16px; }
+.demo-step-n { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #8dc63f; border: 1.5px solid rgba(123,197,154,0.6); border-radius: 999px; padding: 6px 16px; }
 .demo-step-t { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 600; }
 
 .demo-phone {
@@ -43,18 +43,18 @@
   opacity: 0; animation: demo-card 0.6s cubic-bezier(.2,.8,.2,1) both;
 }
 .demo-izq .demo-card { align-items: flex-end; }
-.demo-card-tag { font-family: 'JetBrains Mono', monospace; font-size: 17px; text-transform: uppercase; letter-spacing: 1.5px; color: #7bc59a; }
+.demo-card-tag { font-family: 'JetBrains Mono', monospace; font-size: 17px; text-transform: uppercase; letter-spacing: 1.5px; color: #8dc63f; }
 .demo-card strong { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; line-height: 1.1; }
 .demo-card span:last-child { font-size: 22px; color: #c9cff5; line-height: 1.35; }
 
 .demo-frase { position: absolute; left: 0; right: 0; bottom: 66px; margin: 0; text-align: center; font-size: 30px; font-weight: 500; color: #e7eaff; z-index: 2; animation: demo-in 0.6s 0.4s ease both; }
 
 .demo-progress { position: absolute; left: 72px; right: 72px; bottom: 34px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); z-index: 2; }
-.demo-progress span { display: block; height: 100%; border-radius: 3px; background: #7bc59a; transition: width 0.1s linear; }
+.demo-progress span { display: block; height: 100%; border-radius: 3px; background: #8dc63f; transition: width 0.1s linear; }
 
 .demo-outro { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 120px; z-index: 2; animation: demo-in 0.7s ease both; }
 .demo-outro-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 76px; line-height: 1.05; margin: 0 0 28px; max-width: 760px; }
-.demo-outro-text h1 em { font-style: normal; color: #7bc59a; }
+.demo-outro-text h1 em { font-style: normal; color: #8dc63f; }
 .demo-outro-text p { margin: 0 0 8px; font-size: 30px; color: #c9cff5; }
 .demo-outro-text strong { font-family: 'JetBrains Mono', monospace; font-size: 38px; }
 .demo-outro-qr { padding: 22px; border-radius: 24px; background: #fff; }

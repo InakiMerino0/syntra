@@ -147,7 +147,7 @@ export default function Accion() {
 
         <aside aria-labelledby="prev" className="card-dark" style={{ flex: '2 1 300px', minWidth: 0, padding: 'clamp(16px, 5vw, 24px)', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <h2 id="prev" style={{ fontSize: 15 }}>Qué se va a firmar</h2>
-          <pre className="mono" style={{ margin: 0, padding: 16, background: '#0d1b14', borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#c3d2c8', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{payload}</pre>
+          <pre className="mono" style={{ margin: 0, padding: 16, background: '#070b2a', borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#c9cff5', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{payload}</pre>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
             <span style={{ color: 'var(--dark-muted)' }}>SHA-256 (vista previa)</span>
             <span className="mono" style={{ color: 'var(--accent)', overflowWrap: 'anywhere' }}>{hash || 'calculando…'}</span>
